@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { UserService } from './user.service';
@@ -42,6 +42,7 @@ export class LoginComponent {
   showPassword = false;
 
   private userService = inject(UserService);
+  private router = inject(Router); // Додали роутер
 
   async login() {
     if (!this.email || !this.password) {
@@ -52,8 +53,7 @@ export class LoginComponent {
     try {
       await this.userService.login(this.email, this.password);
       alert("Login successful!");
-      // Тут можна зробити перенаправлення, якщо треба
-      // this.router.navigate(['/dashboard']);
+      this.router.navigate(['/home']); // Переходимо на головну сторінку (GeneralComponent)
     } catch (err: any) {
       alert("Login error: " + err.message);
     }
