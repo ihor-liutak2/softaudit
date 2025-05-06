@@ -42,6 +42,14 @@ import { CommonModule } from '@angular/common';
               </a>
             </li>
 
+            <li class="nav-item">
+              <a class="nav-link" routerLink="/admin/audit">
+                <i class="bi bi-clipboard-check me-1"></i>
+                Audit
+              </a>
+            </li>
+
+
           </ul>
         </div>
       </div>
