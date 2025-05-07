@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { Firestore, doc, getDoc, setDoc, collection, getDocs } from '@angular/fire/firestore';
 import { AUDIT_CHECKLIST } from '../core/utils/audit';
 import { AuditChecklistItem } from "../core/general/general.types";
-import { VocabularyService } from '../audit/audit-vocabulary.service';
 
 @Component({
   selector: 'app-admin-audit',
@@ -31,10 +30,6 @@ import { VocabularyService } from '../audit/audit-vocabulary.service';
       @if (status) {
         <p>{{ status }}</p>
       }
-
-      <div class="w-100"></div>
-
-      <button class="btn btn-outline-primary mb-3" (click)="uploadVocabularySectors()">Upload sectors</button>
 
       <!-- Filter section -->
       <div class="mb-3">
@@ -136,7 +131,7 @@ export class AdminAuditComponent {
   items: AuditChecklistItem[] = [];
   editingItem: AuditChecklistItem | null = null;
 
-  constructor(private firestore: Firestore, private vocabulary: VocabularyService) {
+  constructor(private firestore: Firestore) {
     this.loadItems();
   }
 
@@ -219,7 +214,4 @@ export class AdminAuditComponent {
     this.loadItems();
   }
 
-  uploadVocabularySectors() {
-    this.vocabulary.uploadVocabularySectors();
-  }
 }

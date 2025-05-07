@@ -11,7 +11,15 @@ export class UserService {
 
   currentUser?: AppUser;
 
-  constructor(private auth: Auth, private firestore: Firestore) {}
+  constructor(private auth: Auth, private firestore: Firestore) {
+    this.auth.onAuthStateChanged(user => {
+      if (user) {
+        this.loadUser(user.uid);
+      } else {
+        this.currentUser = undefined;
+      }
+    });
+  }
 
   async register(email: string, password: string, displayName: string) {
     const cred = await createUserWithEmailAndPassword(this.auth, email, password);
@@ -47,5 +55,9 @@ export class UserService {
 
   get user() {
     return this.currentUser;
+  }
+
+  get userEmail() {
+    return this.currentUser?.email || '';
   }
 }

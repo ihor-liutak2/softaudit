@@ -9,6 +9,10 @@ export const auditRoutes: Routes = [
     component: AuditRootComponent,
     children: [
       { path: '', component: AuditHomeComponent },
+      {
+        path: 'edit/:id',
+        component: AddProjectComponent
+      },  
       { path: 'add-project', component: AddProjectComponent },
     ]
   }

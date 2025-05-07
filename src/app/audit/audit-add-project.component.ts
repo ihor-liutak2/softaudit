@@ -1,133 +1,159 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { COMPANY_SEEDS } from '../core/utils/companies';
-import { VocabularyService } from './audit-vocabulary.service';
-import { Sector } from '../core/general/general.types';
-
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { AuditService } from './audit.service';
+import { UserService } from '../core/user/user.service';
+import { ProjectFormComponent } from './audit-project-form.component';
+import { AuditChecklistSelectorComponent } from './audit-checklist-selector.component';
+import { AuditChecklistItem, AuditProject } from '../core/general/general.types';
 
 @Component({
   selector: 'app-add-project',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, RouterModule, ProjectFormComponent, AuditChecklistSelectorComponent],
   template: `
     <div class="container py-5">
-      <h3>Add Audit Project</h3>
+      @if (accessDenied()) {
+        <h3 class="text-danger">Access denied</h3>
+        <p>You do not have access to edit this project.</p>
+      } @else {
 
-      <form (ngSubmit)="submit()" class="mt-4">
+        <h3 *ngIf="isEditMode">Edit Audit Project</h3>
+        <h3 *ngIf="!isEditMode">Add Audit Project</h3>
 
-        <!-- Project Title -->
-        <div class="mb-3">
-          <label class="form-label">Project Title</label>
-          <input type="text" class="form-control" [(ngModel)]="title" name="title" required>
-          @if (!title) {
-            <small class="text-danger">Project title is required</small>
-          }
-        </div>
+        @if (!showChecklistSelector) {
+          <app-project-form 
+            [companies]="companies()"
+            [sectors]="sectors()"
+            [authorEmail]="currentUserEmail"
+            [project]="createdProject"
+            (save)="onSave($event)">
+          </app-project-form>
+        }
 
-        <!-- Project Description -->
-        <div class="mb-3">
-          <label class="form-label">Project Description</label>
-          <textarea class="form-control" [(ngModel)]="description" name="description" rows="3"></textarea>
-        </div>
+        @if (showChecklistSelector && checklistStep === 'object') {
+          <h4>Select OBJECT Checklist Items</h4>
+          <app-audit-checklist-selector
+            [items]="objectChecklistItems()"
+            [selectedIds]="selectedObjectChecklistItems"
+            (selectionChange)="onObjectChecklistChange($event)">
+          </app-audit-checklist-selector>
 
-        <!-- Company selection -->
-        <div class="mb-3">
-          <label class="form-label">Select Company</label>
-          <select class="form-select" [(ngModel)]="companyId" name="companyId" required>
-            <option value="">Select a company</option>
-            <option *ngFor="let company of companies" [value]="company.id">{{ company.name }}</option>
-          </select>
-          @if (!companyId) {
-            <small class="text-danger">Company selection is required</small>
-          }
-        </div>
+          <button class="btn btn-primary mt-3" (click)="nextStep()">Next: Process Checklist</button>
+        }
 
-        <!-- Sector selection -->
-        <div class="mb-3">
-          <label class="form-label">Select Sector</label>
-          <select class="form-select" [(ngModel)]="sectorId" name="sectorId" required>
-            <option value="">Select a sector</option>
-            <option *ngFor="let sec of sectors" [value]="sec.id">{{ sec.name }}</option>
-          </select>
-          @if (!sectorId) {
-            <small class="text-danger">Sector selection is required</small>
-          }
-        </div>
+        @if (showChecklistSelector && checklistStep === 'process') {
+          <h4>Select PROCESS Checklist Items</h4>
+          <app-audit-checklist-selector
+            [items]="processChecklistItems()"
+            [selectedIds]="selectedProcessChecklistItems"
+            (selectionChange)="onProcessChecklistChange($event)">
+          </app-audit-checklist-selector>
 
-        <!-- Start Date -->
-        <div class="mb-3">
-          <label class="form-label">Start Date</label>
-          <input type="date" class="form-control" [(ngModel)]="startDate" name="startDate" required>
-          @if (!startDate) {
-            <small class="text-danger">Start date is required</small>
-          }
-        </div>
+          <button class="btn btn-success mt-3" (click)="finish()">Finish and Save</button>
+        }
 
-        <!-- End Date -->
-        <div class="mb-3">
-          <label class="form-label">End Date (optional)</label>
-          <input type="date" class="form-control" [(ngModel)]="endDate" name="endDate">
-        </div>
-
-        <!-- Audit Team -->
-        <div class="mb-3">
-          <label class="form-label">Audit Team (comma separated emails)</label>
-          <input type="text" class="form-control" [(ngModel)]="auditTeamInput" name="auditTeam">
-        </div>
-
-        <!-- Submit Button -->
-        <button class="btn btn-outline-success w-100" [disabled]="!formValid()">Add Project</button>
-
-      </form>
+      }
     </div>
   `
 })
 export class AddProjectComponent implements OnInit {
 
-  title = '';
-  description = '';
-  companyId = '';
-  sectorId = '';
-  startDate = '';
-  endDate = '';
-  auditTeamInput = '';
+  companies = computed(() => this.auditService.companies());
+  sectors = computed(() => this.auditService.sectors());
+  checklistItems = computed(() => this.auditService.checklistItems());
 
-  companies = COMPANY_SEEDS;
-  sectors: Sector[] = [];
+  currentUserEmail = '';
+  currentUserRole = '';
 
-  constructor(private vocabularyService: VocabularyService) {}
+  showChecklistSelector = false;
+  checklistStep: 'object' | 'process' = 'object';
+
+  selectedObjectChecklistItems = new Set<string>();
+  selectedProcessChecklistItems = new Set<string>();
+
+  createdProject?: AuditProject;
+
+  isEditMode = false;
+  accessDenied = signal(false);
+
+  constructor(
+    private auditService: AuditService,
+    private userService: UserService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    this.vocabularyService.loadSectors();
-    this.sectors = this.vocabularyService.sectors();
+    this.auditService.loadCompanies();
+    this.auditService.loadSectors();
 
+    this.currentUserEmail = this.userService.userEmail;
+    this.currentUserRole = this.userService.user?.role || '';
+
+    const projectId = this.route.snapshot.paramMap.get('id');
+
+    if (projectId) {
+      this.isEditMode = true;
+
+      this.auditService.getAuditProjectById(projectId).then(project => {
+
+        if (!project) {
+          this.accessDenied.set(true);
+          return;
+        }
+
+        // If not admin → check if user is in auditTeam
+        if (this.currentUserRole !== 'admin' && !project.auditTeam.includes(this.currentUserEmail)) {
+          this.accessDenied.set(true);
+          return;
+        }
+
+        this.createdProject = project;
+
+      });
+    }
   }
 
-  submit() {
-    const auditTeam = this.auditTeamInput.split(',').map(email => email.trim()).filter(email => email);
-
-    const project = {
-      title: this.title,
-      description: this.description,
-      companyId: this.companyId,
-      sectorId: this.sectorId,
-      startDate: this.startDate,
-      endDate: this.endDate || undefined,
-      auditTeam,
-      createdAt: new Date().toISOString(),
-      status: 'planning',
-      active: true
-    };
-
-    console.log('Created Project:', project);
-
-    alert('Project added (console log only for now)');
-    // TODO: Save to Firestore
+  onSave(project: AuditProject) {
+    this.auditService.saveAuditProject(project).then(() => {
+      this.createdProject = project;
+      this.showChecklistSelector = true;
+      this.checklistStep = 'object';
+    });
   }
 
-  formValid(): boolean {
-    return Boolean(this.title.trim() && this.companyId && this.sectorId && this.startDate);
+  objectChecklistItems() {
+    return this.checklistItems().filter(item => item.section === 'object');
+  }
+
+  processChecklistItems() {
+    return this.checklistItems().filter(item => item.section === 'process');
+  }
+
+  onObjectChecklistChange(selected: Set<string>) {
+    this.selectedObjectChecklistItems = selected;
+  }
+
+  onProcessChecklistChange(selected: Set<string>) {
+    this.selectedProcessChecklistItems = selected;
+  }
+
+  nextStep() {
+    this.checklistStep = 'process';
+  }
+
+  finish() {
+    const allSelected = [
+      ...Array.from(this.selectedObjectChecklistItems),
+      ...Array.from(this.selectedProcessChecklistItems)
+    ];
+
+    console.log('All selected checklist items:', allSelected);
+
+    alert('Project and checklist selections completed!');
+
+    // TODO: Save checklist items to Firestore
+    this.showChecklistSelector = false;
   }
 }

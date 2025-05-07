@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
 
             <!-- Modules link -->
             <li class="nav-item">
-              <a class="nav-link" routerLink="/">
+              <a class="nav-link" routerLink="/home">
                 <i class="bi bi-grid me-1"></i>
                 Modules
               </a>

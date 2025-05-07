@@ -56,18 +56,21 @@ export type Company = {
     endDate?: string;              // When audit ended (optional)
   
     status: 'planned' | 'active' | 'completed' | 'archived'; // Project status
+    active: boolean;               // Project is active or not (soft delete or archive flag)
   
     auditTeam: string[];           // User IDs or names of auditors
   
-    checklistItemsIds?: string[];  // List of checklist item ids used for this audit
-    findings?: AuditFinding[];     // List of findings (optional)
+    checklistItemsIds: AuditChecklistItem[];  // List of checklist item used for this audit
+    findings: AuditFinding[];     // List of findings (optional)
   
     createdAt: string;             // When created
     updatedAt?: string;            // Last updated
   };
   
+  
   export type Sector = {
     id: string;    // Unique sector identifier (lowercase, dash-separated)
     name: string;  // Human-readable sector name (Capitalized)
+    description: string;
   };
   
