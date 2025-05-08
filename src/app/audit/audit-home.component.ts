@@ -31,7 +31,8 @@ import { Router } from '@angular/router';
           <app-audit-project-table
             [projects]="projects()"
             [companies]="companies()"
-            (editProject)="onEditProject($event)">
+            (editProject)="onEditProject($event)"
+            (manageFindings)="onManageFindings($event)">
           </app-audit-project-table>
         } @else {
           <p class="text-muted">No projects found.</p>
@@ -67,6 +68,15 @@ export class AuditHomeComponent implements OnInit {
     }
 
     this.router.navigate(['/audit/edit', project.id]);
+}
+
+onManageFindings(project: AuditProject) {
+  if (!project.id) {
+    console.error('Project has no ID');
+    return;
+  }
+
+  this.router.navigate(['/audit/findings', project.id]);
 }
 
 }

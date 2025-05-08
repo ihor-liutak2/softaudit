@@ -100,15 +100,30 @@ export class AuditService {
   // AuditChecklistItem methods
   // -----------------------------
 
-  async saveAuditChecklistItem(projectId: string, item: AuditChecklistItem): Promise<void> {
-    const itemRef = doc(this.firestore, `auditProjects/${projectId}/checklistItems`, item.id);
-    await setDoc(itemRef, item);
+  async getFindingsForProject(projectId: string): Promise<AuditFinding[]> {
+    const findingsRef = collection(this.firestore, 'auditFindings');
+    const q = query(findingsRef, where('projectId', '==', projectId));
+    const snap = await getDocs(q);
+  
+    return snap.docs.map(doc => doc.data() as AuditFinding);
+  }
+  
+  async saveFinding(finding: AuditFinding): Promise<void> {
+    const findingRef = doc(this.firestore, 'auditFindings', finding.id);
+    await setDoc(findingRef, finding);
   }
 
-  async deleteAuditChecklistItem(projectId: string, itemId: string): Promise<void> {
-    const itemRef = doc(this.firestore, `auditProjects/${projectId}/checklistItems`, itemId);
-    await deleteDoc(itemRef);
+  async deleteFinding(findingId: string): Promise<void> {
+    const findingRef = doc(this.firestore, 'auditFindings', findingId);
+    await deleteDoc(findingRef);
   }
+
+  async getChecklistItems(projectId: string): Promise<AuditChecklistItem[]> {
+    const ref = collection(this.firestore, `auditProjects/${projectId}/checklistItems`);
+    const snap = await getDocs(ref);
+    return snap.docs.map(doc => doc.data() as AuditChecklistItem);
+  }
+  
 
   // --------------------------
   // AuditFinding methods

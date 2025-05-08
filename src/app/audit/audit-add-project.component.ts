@@ -5,7 +5,7 @@ import { AuditService } from './audit.service';
 import { UserService } from '../core/user/user.service';
 import { ProjectFormComponent } from './audit-project-form.component';
 import { AuditChecklistSelectorComponent } from './audit-checklist-selector.component';
-import { AuditChecklistItem, AuditProject } from '../core/general/general.types';
+import { AuditChecklistItem, AuditProject, AuditFinding } from '../core/general/general.types';
 
 @Component({
   selector: 'app-add-project',
@@ -36,6 +36,7 @@ import { AuditChecklistItem, AuditProject } from '../core/general/general.types'
           <app-audit-checklist-selector
             [items]="objectChecklistItems()"
             [selectedIds]="selectedObjectChecklistItems"
+            [findingsCount]="findingsCountMap()"
             (selectionChange)="onObjectChecklistChange($event)">
           </app-audit-checklist-selector>
 
@@ -47,6 +48,7 @@ import { AuditChecklistItem, AuditProject } from '../core/general/general.types'
           <app-audit-checklist-selector
             [items]="processChecklistItems()"
             [selectedIds]="selectedProcessChecklistItems"
+            [findingsCount]="findingsCountMap()"
             (selectionChange)="onProcessChecklistChange($event)">
           </app-audit-checklist-selector>
 
@@ -73,6 +75,8 @@ export class AddProjectComponent implements OnInit {
   selectedProcessChecklistItems = new Set<string>();
 
   createdProject?: AuditProject;
+
+  findings = signal<AuditFinding[]>([]);
 
   isEditMode = false;
   accessDenied = signal(false);
@@ -103,7 +107,6 @@ export class AddProjectComponent implements OnInit {
           return;
         }
 
-        // If not admin → check if user is in auditTeam
         if (this.currentUserRole !== 'admin' && !project.auditTeam.includes(this.currentUserEmail)) {
           this.accessDenied.set(true);
           return;
@@ -111,6 +114,21 @@ export class AddProjectComponent implements OnInit {
 
         this.createdProject = project;
 
+        // Restore selected checklist items
+        if (project.checklistItems) {
+          this.selectedObjectChecklistItems = new Set(
+            project.checklistItems.filter(item => item.section === 'object').map(item => item.id)
+          );
+
+          this.selectedProcessChecklistItems = new Set(
+            project.checklistItems.filter(item => item.section === 'process').map(item => item.id)
+          );
+        }
+
+        // Load findings
+        this.auditService.getFindingsForProject(project.id).then(items => {
+          this.findings.set(items);
+        });
       });
     }
   }
@@ -144,16 +162,44 @@ export class AddProjectComponent implements OnInit {
   }
 
   finish() {
-    const allSelected = [
+    const allSelectedIds = [
       ...Array.from(this.selectedObjectChecklistItems),
       ...Array.from(this.selectedProcessChecklistItems)
     ];
 
-    console.log('All selected checklist items:', allSelected);
+    console.log('Selected checklist item IDs:', allSelectedIds);
 
-    alert('Project and checklist selections completed!');
+    if (!this.createdProject) {
+      console.error('Project is not defined');
+      return;
+    }
 
-    // TODO: Save checklist items to Firestore
-    this.showChecklistSelector = false;
+    const selectedItems: AuditChecklistItem[] = this.checklistItems().filter(item =>
+      allSelectedIds.includes(item.id)
+    );
+
+    const updatedProject = {
+      ...this.createdProject,
+      checklistItems: selectedItems,
+      updatedAt: new Date().toISOString()
+    };
+
+    this.auditService.saveAuditProject(updatedProject).then(() => {
+      alert('Project and checklist selections saved!');
+      this.showChecklistSelector = false;
+    }).catch(err => {
+      console.error('Failed to save project:', err);
+      alert('Error saving project checklist items');
+    });
+  }
+
+  findingsCountMap(): { [checklistItemId: string]: number } {
+    const countMap: { [id: string]: number } = {};
+
+    for (const finding of this.findings()) {
+      countMap[finding.checklistItemId] = (countMap[finding.checklistItemId] || 0) + 1;
+    }
+
+    return countMap;
   }
 }

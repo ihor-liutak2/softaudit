@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuditChecklistItem } from '../core/general/general.types';
+import { AuditChecklistItem, AuditFinding } from '../core/general/general.types';
+import { AuditFindingListComponent } from './audit-finding-list.component';
 
 @Component({
   selector: 'app-audit-checklist-selector',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AuditFindingListComponent],
   template: `
     <div class="d-flex justify-content-end mb-4 gap-3">
       <button class="btn btn-outline-danger btn-sm" (click)="selectByCriticality(['high'])">Select all HIGH</button>
@@ -24,10 +25,12 @@ import { AuditChecklistItem } from '../core/general/general.types';
             <label class="d-flex align-items-start gap-3">
               <input type="checkbox" [checked]="selectedIds.has(item.id)" (change)="toggleItem(item.id)" class="form-check-input mt-1">
 
-              <div>
-                <div class="fw-bold mb-2">
-                  {{ item.title }}
-                  
+              <div class="w-100">
+                <div class="d-flex align-items-center mb-2 gap-2">
+                  <div class="fw-bold">
+                    {{ item.title }}
+                  </div>
+
                   <span class="badge rounded-pill"
                         [ngClass]="{
                           'bg-success': item.criticality === 'low',
@@ -38,8 +41,14 @@ import { AuditChecklistItem } from '../core/general/general.types';
                   </span>
 
                   @if (item.standardCompliance) {
-                    <span class="badge rounded-pill bg-info text-dark ms-2">
-                      Standard: {{ item.standardCompliance }}
+                    <span class="badge rounded-pill bg-info text-dark">
+                      {{ item.standardCompliance }}
+                    </span>
+                  }
+
+                  @if (getFindingCount(item.id) > 0) {
+                    <span class="badge rounded-pill bg-primary ms-auto">
+                      {{ getFindingCount(item.id) }} Findings
                     </span>
                   }
                 </div>
@@ -47,6 +56,20 @@ import { AuditChecklistItem } from '../core/general/general.types';
                 <div class="text-muted">
                   {{ item.description }}
                 </div>
+
+                <!-- Show / Hide findings button -->
+                @if (getFindingCount(item.id) > 0) {
+                  <button class="btn btn-sm btn-outline-secondary mt-2" (click)="toggleFinding(item.id)">
+                    @if (expandedFindings.has(item.id)) { Hide Findings } @else { Show Findings }
+                  </button>
+                }
+
+                <!-- Findings list -->
+                <app-audit-finding-list
+                  *ngIf="expandedFindings.has(item.id)"
+                  [findings]="getFindings(item.id)">
+                </app-audit-finding-list>
+
               </div>
             </label>
 
@@ -62,7 +85,12 @@ export class AuditChecklistSelectorComponent {
 
   @Input() items: AuditChecklistItem[] = [];
   @Input() selectedIds = new Set<string>();
+  @Input() findingsCount: { [checklistItemId: string]: number } = {};
+  @Input() findingsMap: { [checklistItemId: string]: AuditFinding[] } = {};
+
   @Output() selectionChange = new EventEmitter<Set<string>>();
+
+  expandedFindings = new Set<string>();
 
   get groupedItems() {
     const grouped: { [key: string]: AuditChecklistItem[] } = {};
@@ -97,8 +125,22 @@ export class AuditChecklistSelectorComponent {
         }
       }
     }
-    // Emit updated selection
     this.selectionChange.emit(new Set(this.selectedIds));
   }
-  
+
+  getFindingCount(itemId: string): number {
+    return this.findingsMap[itemId]?.length || 0;
+  }
+
+  getFindings(itemId: string): AuditFinding[] {
+    return this.findingsMap[itemId] || [];
+  }
+
+  toggleFinding(itemId: string) {
+    if (this.expandedFindings.has(itemId)) {
+      this.expandedFindings.delete(itemId);
+    } else {
+      this.expandedFindings.add(itemId);
+    }
+  }
 }

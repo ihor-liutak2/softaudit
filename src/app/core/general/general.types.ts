@@ -60,7 +60,7 @@ export type Company = {
   
     auditTeam: string[];           // User IDs or names of auditors
   
-    checklistItemsIds: AuditChecklistItem[];  // List of checklist item used for this audit
+    checklistItems: AuditChecklistItem[];  // List of checklist item used for this audit
     findings: AuditFinding[];     // List of findings (optional)
   
     createdAt: string;             // When created

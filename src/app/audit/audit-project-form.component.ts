@@ -28,7 +28,7 @@ import { Sector, Company, AuditProject } from '../core/general/general.types';
     <!-- Company + Search -->
     <div class="col-12 col-md-6">
       <label class="form-label">Select Company</label>
-      <input type="text" class="form-control mb-2" placeholder="Search company..." [value]="companySearch()" (input)="companySearch.set($event.target.value)">
+      <input type="text" class="form-control mb-2" placeholder="Search company..." [value]="companySearch()" (input)="onCompanySearch($event)">
       <select class="form-select" [(ngModel)]="companyId" name="companyId" required #companySelect="ngModel">
         <option value="">Select a company</option>
         <option *ngFor="let company of filteredCompanies()" [value]="company.id">{{ company.name }}</option>
@@ -161,11 +161,15 @@ export class ProjectFormComponent implements OnChanges {
       status: this.status as 'planned' | 'active' | 'completed' | 'archived',
       active: this.project?.active ?? true,
       auditTeam,
-      checklistItemsIds: this.project?.checklistItemsIds || [],
+      checklistItems: this.project?.checklistItems || [],
       findings: this.project?.findings || [],
       createdAt: this.project?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     } as AuditProject);
   }
   
+  onCompanySearch(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.companySearch.set(input.value);
+  }
 }

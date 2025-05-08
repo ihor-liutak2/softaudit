@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuditRootComponent } from './audit-root.component';
 import { AddProjectComponent } from './audit-add-project.component';
 import { AuditHomeComponent } from './audit-home.component';
+import { AuditProjectFindingsComponent } from './audit-project-findings.component';
 
 export const auditRoutes: Routes = [
   { 
@@ -9,10 +10,8 @@ export const auditRoutes: Routes = [
     component: AuditRootComponent,
     children: [
       { path: '', component: AuditHomeComponent },
-      {
-        path: 'edit/:id',
-        component: AddProjectComponent
-      },  
+      { path: 'edit/:id', component: AddProjectComponent },
+      { path: 'findings/:id', component: AuditProjectFindingsComponent },
       { path: 'add-project', component: AddProjectComponent },
     ]
   }

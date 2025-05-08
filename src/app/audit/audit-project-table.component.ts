@@ -70,6 +70,7 @@ import { AuditProject, Company } from '../core/general/general.types';
             </td>
             <td>
               <button class="btn btn-outline-primary btn-sm" (click)="editProject.emit(project)">Edit</button>
+              <button class="btn btn-sm btn-outline-secondary" (click)="manageFindings.emit(project)">Manage Findings</button>
             </td>
           </tr>
         }
@@ -83,6 +84,7 @@ export class AuditProjectTableComponent {
   @Input() companies: Company[] = [];
 
   @Output() editProject = new EventEmitter<AuditProject>();
+  @Output() manageFindings = new EventEmitter<AuditProject>();
 
   searchUser = '';
   filterCompany = '';
