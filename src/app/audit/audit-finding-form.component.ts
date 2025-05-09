@@ -74,6 +74,8 @@ export class AuditFindingFormComponent implements OnChanges {
   @Input() checklistItemId = '';
 
   @Output() save = new EventEmitter<AuditFinding>();
+  @Output() close = new EventEmitter<void>();
+
 
   title = '';
   description = '';
@@ -114,6 +116,7 @@ export class AuditFindingFormComponent implements OnChanges {
     };
 
     this.save.emit(finding);
+    this.close.emit();
   }
 
   generateId(): string {

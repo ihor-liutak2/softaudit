@@ -111,10 +111,18 @@ export class AuditService {
 
 
   async getChecklistItems(projectId: string): Promise<AuditChecklistItem[]> {
-    const ref = collection(this.firestore, `auditProjects/${projectId}/checklistItems`);
-    const snap = await getDocs(ref);
-    return snap.docs.map(doc => doc.data() as AuditChecklistItem);
+    const projectRef = doc(this.firestore, `auditProjects/${projectId}`);
+    const projectSnap = await getDoc(projectRef);
+  
+    if (!projectSnap.exists()) {
+      console.warn(`Project ${projectId} not found`);
+      return [];
+    }
+  
+    const data = projectSnap.data();
+    return data['checklistItems'] || [];
   }
+  
   
 
   // --------------------------
