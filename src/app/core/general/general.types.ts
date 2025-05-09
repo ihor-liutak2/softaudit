@@ -24,6 +24,17 @@ export type Company = {
     defaultStatus: 'pending' | 'pass' | 'fail' | 'n/a';  // Default status
     active: boolean;         // Is active (can be used)
   };
+  
+  export type AuditFindingTemplate = {
+    id: string;                  // Unique identifier
+    checklistItemId: string;     // The checklist item (AuditChecklistItem) this finding refers to
+  
+    title: string;               // Short title or summary of finding
+    description: string;         // Detailed description of the issue
+  
+    severity: 'low' | 'medium' | 'high' | 'critical';  // Severity level of the finding
+  };
+  
 
 
   export type AuditFinding = {

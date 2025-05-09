@@ -8,7 +8,8 @@ import { AuditChecklistItem, AuditFinding } from '../core/general/general.types'
   selector: 'app-audit-project-findings',
   standalone: true,
   imports: [CommonModule, RouterModule],
-  template: `
+  template: ` <pre>{{ checklistItems() | json }}</pre>
+
     <div class="container py-5">
 
       <h3>Audit Checklist & Findings</h3>
