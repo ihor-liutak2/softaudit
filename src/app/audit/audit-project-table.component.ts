@@ -69,7 +69,7 @@ import { AuditProject, Company } from '../core/general/general.types';
               }
             </td>
             <td>
-              <button class="btn btn-outline-primary btn-sm" (click)="editProject.emit(project)">Edit</button>
+              <button class="btn btn-outline-primary btn-sm me-2" (click)="editProject.emit(project)">Edit</button>
               <button class="btn btn-sm btn-outline-secondary" (click)="manageFindings.emit(project)">Manage Findings</button>
             </td>
           </tr>
