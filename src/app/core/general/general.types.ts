@@ -56,28 +56,39 @@ export type Company = {
   
 
   export type AuditProject = {
-    id: string;                    // Unique identifier (Firestore document id)
-    companyId: string;             // Company which is being audited
+    id: string;
+    companyId: string;
   
-    title: string;                 // Project title
-    description?: string;          // Optional project description (scope, goals)
+    title: string;
+    description?: string;
+    sector: string;
+    startDate: string;
+    endDate?: string;
   
-    sector: string;                // Sector (Energy, Medical, Banking, etc.)
-    startDate: string;             // When the audit started
-    endDate?: string;              // When audit ended (optional)
+    status: 'planned' | 'active' | 'completed' | 'archived';
+    active: boolean;
   
-    status: 'planned' | 'active' | 'completed' | 'archived'; // Project status
-    active: boolean;               // Project is active or not (soft delete or archive flag)
+    auditTeam: string[]; // Auditors (users with internal roles)
   
-    auditTeam: string[];           // User IDs or names of auditors
+    // Optional fields for role-based collaboration and approval process
+    companyRepresentatives?: {
+      name: string;
+      role: 'quality_manager' | 'system_owner' | 'compliance_officer' | 'external_observer';
+      email?: string;
+    }[];
   
-    checklistItems: AuditChecklistItem[];  // List of checklist item used for this audit
-    findings: AuditFinding[];     // List of findings (optional)
+    approvers?: {
+      userId: string;
+      name: string;
+      email?: string;
+      approvedAt?: string;
+    }[];
   
-    createdAt: string;             // When created
-    updatedAt?: string;            // Last updated
+    checklistItems: AuditChecklistItem[];
+    createdAt: string;
+    updatedAt?: string;
   };
-  
+    
   
   export type Sector = {
     id: string;    // Unique sector identifier (lowercase, dash-separated)

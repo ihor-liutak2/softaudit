@@ -162,7 +162,6 @@ export class ProjectFormComponent implements OnChanges {
       active: this.project?.active ?? true,
       auditTeam,
       checklistItems: this.project?.checklistItems || [],
-      findings: this.project?.findings || [],
       createdAt: this.project?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     } as AuditProject);
