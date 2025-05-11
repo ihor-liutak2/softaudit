@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter, signal, computed } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditProject, Company } from '../core/general/general.types';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-audit-project-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="p-3 border rounded bg-light mb-4">
       <div class="row g-2">
@@ -70,7 +71,10 @@ import { AuditProject, Company } from '../core/general/general.types';
             </td>
             <td>
               <button class="btn btn-outline-primary btn-sm me-2" (click)="editProject.emit(project)">Edit</button>
-              <button class="btn btn-sm btn-outline-secondary" (click)="manageFindings.emit(project)">Manage Findings</button>
+              <button class="btn btn-outline-secondary btn-sm me-2" (click)="manageFindings.emit(project)">Manage Findings</button>
+              <a [routerLink]="['/audit/report', project.id]" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-file-earmark-text"></i> Report
+              </a>
             </td>
           </tr>
         }

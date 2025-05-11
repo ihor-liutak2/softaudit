@@ -42,7 +42,7 @@ export class LoginComponent {
   showPassword = false;
 
   private userService = inject(UserService);
-  private router = inject(Router); // Додали роутер
+  private router = inject(Router);
 
   async login() {
     if (!this.email || !this.password) {
@@ -52,8 +52,7 @@ export class LoginComponent {
 
     try {
       await this.userService.login(this.email, this.password);
-      alert("Login successful!");
-      this.router.navigate(['/home']); // Переходимо на головну сторінку (GeneralComponent)
+      this.router.navigate(['/home']);
     } catch (err: any) {
       alert("Login error: " + err.message);
     }

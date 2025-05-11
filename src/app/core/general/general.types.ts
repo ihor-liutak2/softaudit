@@ -85,3 +85,48 @@ export type Company = {
     description: string;
   };
   
+
+  export type StoredReportFinding = {
+    findingId: string;                     // Link to AuditFinding
+    checklistItemId: string;              // Link to AuditChecklistItem
+  
+    reviewerComments?: string;
+    correctionPlan?: string;
+    statusAfterReview?: 'accepted' | 'needs_work' | 'rejected';
+    resolvedBy?: string;
+    resolvedAt?: string;
+  
+    // Optional snapshot of data at time of report
+    snapshot?: {
+      title: string;
+      description: string;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      detectedAt: string;
+    };
+  };
+  
+
+  export type StoredAuditReport = {
+    id: string;                        // Firestore document ID
+    projectId: string;                 // Link to AuditProject
+    createdBy: string;                // User ID of creator
+    createdAt: string;                // Timestamp
+    updatedAt?: string;               // Last update (optional)
+    status: 'draft' | 'submitted' | 'approved'; // Workflow state
+  
+    findings: StoredReportFinding[];  // Findings with comments and review status
+  
+    summary: {
+      totalChecklistItems: number;
+      totalFindings: number;
+      criticalCount: number;
+      highCount: number;
+      mediumCount: number;
+      lowCount: number;
+      unresolvedFindings: number;
+      acceptedCount: number;
+      needsWorkCount: number;
+    };
+  };
+  
+  

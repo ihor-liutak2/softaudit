@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AuditChecklistItem, AuditFinding } from '../core/general/general.types';
 import { AuditService } from './audit.service';
 import { AuditFindingFormComponent } from './audit-finding-form.component';
+import { VertexAiService } from '../core/general/vertex-ai.service';
 
 @Component({
   selector: 'app-audit-project-findings',
@@ -72,10 +73,12 @@ import { AuditFindingFormComponent } from './audit-finding-form.component';
               <app-audit-finding-form
                 [projectId]="projectId"
                 [checklistItemId]="selectedChecklistItem()?.id || ''"
+                [finding]="selectedFinding() || undefined"
                 (save)="onSaveFinding($event)"
-                (close)="closeModal()">
+                (close)="closeModal()"
+                (aiSuggest)="onSuggestFinding($event)">
               </app-audit-finding-form>
-            </div>
+            </div>  
 
           </div>
         </div>
@@ -93,9 +96,13 @@ export class AuditProjectFindingsComponent implements OnInit {
   selectedChecklistItem = signal<AuditChecklistItem | null>(null);
   showForm = signal(false);
 
+  selectedFinding = signal<AuditFinding | null>(null);
+  aiNotesLoading = signal(false);
+
   constructor(
     private route: ActivatedRoute,
-    private auditService: AuditService
+    private auditService: AuditService,
+    private vertexAiService: VertexAiService
   ) {}
 
   ngOnInit() {
@@ -126,9 +133,11 @@ export class AuditProjectFindingsComponent implements OnInit {
   }
 
   editFinding(finding: AuditFinding) {
-    alert(`Editing: ${finding.title}`);
-    // Later: set selected finding and reuse the modal
-  }
+    this.selectedFinding.set(finding);
+    const checklistItem = this.checklistItems().find(i => i.id === finding.checklistItemId) || null;
+    this.selectedChecklistItem.set(checklistItem);
+    this.showForm.set(true);
+  }  
 
   closeForm() {
     this.showForm.set(false);
@@ -145,6 +154,25 @@ export class AuditProjectFindingsComponent implements OnInit {
   
   closeModal() {
     this.showForm.set(false);
-  }
+    this.selectedChecklistItem.set(null);
+    this.selectedFinding.set(null);
+  }  
+
+  onSuggestFinding(data: { title: string; description: string }) {
+    this.aiNotesLoading.set(true);
+    this.vertexAiService.suggestFindingNotes(data.title, data.description).subscribe({
+      next: (result) => {
+        const current = this.selectedFinding();
+        if (current) {
+          this.selectedFinding.set({ ...current, notes: result });
+        }
+        this.aiNotesLoading.set(false);
+      },
+      error: (err) => {
+        console.error('AI suggestion error:', err);
+        this.aiNotesLoading.set(false);
+      }
+    });
+  }  
   
 }

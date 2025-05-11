@@ -52,17 +52,17 @@ To execute unit tests with the [Karma](https://karma-runner.github.io) test runn
 ng test
 ```
 
-## Running end-to-end tests
+## Running vertex
 
-For end-to-end (e2e) testing, run:
+Як автентифікуватися:
+Через gcloud CLI:
 
-```bash
-ng e2e
-```
+gcloud auth application-default login
+Потім отримати токен:
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
-## Additional Resources
+gcloud auth application-default print-access-token
+І використати його в заголовку:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-"# softaudit" 
+
+Authorization: Bearer <ACCESS_TOKEN>

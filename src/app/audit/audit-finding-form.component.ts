@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuditFinding } from '../core/general/general.types';
+import { AuditFinding, AuditFindingTemplate } from '../core/general/general.types';
+import { AUDIT_FINDING_TEMPLATES } from '../core/utils/audit-finding';
 
 @Component({
   selector: 'app-audit-finding-form',
@@ -15,8 +16,27 @@ import { AuditFinding } from '../core/general/general.types';
       <form (ngSubmit)="submit()" class="row g-3">
 
         <div class="col-12">
-          <label class="form-label">Title</label>
+          <label class="form-label d-flex justify-content-between align-items-center">
+            Title
+            <button type="button" class="btn btn-sm btn-outline-info ms-2" (click)="toggleSuggestions()" title="Suggest findings">
+              <i class="bi bi-lightbulb"></i>
+            </button>
+          </label>
+
           <input type="text" class="form-control" [(ngModel)]="title" name="title" required>
+
+          @if (showSuggestions()) {
+            <p class="mt-2 text-info">Select possible suggestions</p>
+            <ul class="list-group mt-2">
+              @for (suggestion of filteredSuggestions(); track suggestion.id) {
+                <li
+                  class="list-group-item list-group-item-action text-info"
+                  (click)="applySuggestion(suggestion)">
+                  {{ suggestion.title }}
+                </li>
+              }
+            </ul>
+          }
         </div>
 
         <div class="col-12">
@@ -55,7 +75,17 @@ import { AuditFinding } from '../core/general/general.types';
         </div>
 
         <div class="col-12">
-          <label class="form-label">Notes (optional)</label>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label">Notes (optional)</label>
+
+            <button
+              *ngIf="finding?.id && !notes.trim()"
+              type="button"
+              class="btn btn-sm btn-outline-info ms-2"
+              (click)="aiSuggest.emit({ title, description })">
+              <i class="bi bi-robot"></i> Suggest
+            </button>
+          </div>
           <textarea class="form-control" [(ngModel)]="notes" name="notes" rows="2"></textarea>
         </div>
 
@@ -67,15 +97,17 @@ import { AuditFinding } from '../core/general/general.types';
     </div>
   `
 })
-export class AuditFindingFormComponent implements OnChanges {
-
+export class AuditFindingFormComponent {
   @Input() finding?: AuditFinding;
   @Input() projectId = '';
   @Input() checklistItemId = '';
 
   @Output() save = new EventEmitter<AuditFinding>();
   @Output() close = new EventEmitter<void>();
+  @Output() aiSuggest = new EventEmitter<{ title: string; description: string }>();
 
+  suggestions = AUDIT_FINDING_TEMPLATES;
+  showingSuggestions = signal(false);
 
   title = '';
   description = '';
@@ -111,8 +143,8 @@ export class AuditFindingFormComponent implements OnChanges {
       severity: this.severity,
       status: this.status,
       detectedAt: this.detectedAt,
-      resolvedAt: this.resolvedAt || undefined,
-      notes: this.notes || undefined,
+      ...(this.resolvedAt && { resolvedAt: this.resolvedAt }),
+      ...(this.notes?.trim() && { notes: this.notes.trim() })
     };
 
     this.save.emit(finding);
@@ -121,5 +153,24 @@ export class AuditFindingFormComponent implements OnChanges {
 
   generateId(): string {
     return Math.random().toString(36).substring(2, 12);
+  }
+
+  toggleSuggestions() {
+    this.showingSuggestions.set(!this.showingSuggestions());
+  }
+
+  showSuggestions(): boolean {
+    return this.showingSuggestions();
+  }
+
+  filteredSuggestions(): AuditFindingTemplate[] {
+    return this.suggestions.filter(t => t.checklistItemId === this.checklistItemId);
+  }
+
+  applySuggestion(template: AuditFindingTemplate) {
+    this.title = template.title;
+    this.description = template.description;
+    this.severity = template.severity;
+    this.showingSuggestions.set(false);
   }
 }
