@@ -1,10 +1,11 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { AuditChecklistItem, AuditFinding } from '../core/general/general.types';
+import { AuditChecklistItem, AuditFinding, AuditUserRole } from '../core/general/general.types';
 import { AuditService } from './audit.service';
 import { AuditFindingFormComponent } from './audit-finding-form.component';
 import { VertexAiService } from '../core/general/vertex-ai.service';
+import { getAuth } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-audit-project-findings',
@@ -47,6 +48,7 @@ import { VertexAiService } from '../core/general/vertex-ai.service';
                       <span class="badge bg-secondary ms-1">{{ finding.status }}</span>
                       <span class="badge bg-danger ms-1">{{ finding.severity }}</span>
                       <button class="btn btn-sm btn-link" (click)="editFinding(finding)">Edit</button>
+                      <button class="btn btn-sm btn-link text-danger" (click)="deleteFinding(finding)">Delete</button>
                     </li>
                   }
                 </ul>
@@ -99,14 +101,23 @@ export class AuditProjectFindingsComponent implements OnInit {
   selectedFinding = signal<AuditFinding | null>(null);
   aiNotesLoading = signal(false);
 
+  currentUserId = '';
+  currentUserEmail = '';
+  currentUserRole: AuditUserRole = 'quality_manager';
+
   constructor(
     private route: ActivatedRoute,
     private auditService: AuditService,
     private vertexAiService: VertexAiService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.projectId = this.route.snapshot.paramMap.get('id') || '';
+    const user = getAuth().currentUser;
+    this.currentUserId = user?.uid || 'unknown';
+    this.currentUserEmail = user?.email || 'unknown@user';
+    this.currentUserRole = 'quality_manager';
+
     if (this.projectId) {
       this.loadChecklistItems();
       this.loadFindings();
@@ -145,13 +156,24 @@ export class AuditProjectFindingsComponent implements OnInit {
   }
 
   onSaveFinding(finding: AuditFinding) {
-    this.auditService.saveFinding(finding).then(() => {
+    this.auditService.saveFinding(finding, {
+      userId: this.currentUserId,
+      userName: this.currentUserEmail,
+      role: this.currentUserRole
+    }).then(() => {
       const existing = this.findings().filter(f => f.id !== finding.id);
       this.findings.set([...existing, finding]);
       this.showForm.set(false);
     });
   }
-  
+
+  deleteFinding(finding: AuditFinding) {
+    if (!confirm('Are you sure you want to delete this finding?')) return;
+    this.auditService.deleteFinding(this.projectId, finding.id).then(() => {
+      this.findings.set(this.findings().filter(f => f.id !== finding.id));
+    });
+  }
+
   closeModal() {
     this.showForm.set(false);
     this.selectedChecklistItem.set(null);
@@ -174,5 +196,5 @@ export class AuditProjectFindingsComponent implements OnInit {
       }
     });
   }  
-  
+
 }

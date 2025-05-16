@@ -1,19 +1,35 @@
-import { AuditFinding, AuditProject, StoredAuditReport, StoredReportFinding } from "../core/general/general.types";
-
+import {
+  AuditFinding,
+  AuditProject,
+  StoredAuditReport,
+  StoredAuditReportFinding,
+  AuditRoleActionLog,
+  AuditUserRole
+} from "../core/general/general.types";
 
 export function buildEmptyAuditReport(
   project: AuditProject,
   findings: AuditFinding[],
-  currentUserEmail: string
+  currentUserEmail: string,
+  currentUserId: string = 'system',
+  currentUserRole: AuditUserRole = 'quality_manager'
 ): StoredAuditReport {
   const now = new Date().toISOString();
 
-  const enrichedFindings: StoredReportFinding[] = findings.map(f => ({
+  const enrichedFindings: StoredAuditReportFinding[] = findings.map(f => ({
     findingId: f.id,
     checklistItemId: f.checklistItemId,
     reviewerComments: '',
     correctionPlan: '',
     statusAfterReview: undefined,
+    resolvedBy: undefined,
+    resolvedAt: undefined,
+    lastModifiedBy: {
+      userId: currentUserId,
+      userName: currentUserEmail,
+      role: currentUserRole,
+      modifiedAt: now
+    },
     snapshot: {
       title: f.title,
       description: f.description,
@@ -43,10 +59,19 @@ export function buildEmptyAuditReport(
   const report: StoredAuditReport = {
     id: project.id,
     projectId: project.id,
-    createdBy: currentUserEmail,
+    createdBy: currentUserId,
     createdAt: now,
     status: 'draft',
     findings: enrichedFindings,
+    changeLog: [
+      {
+        role: currentUserRole,
+        userId: currentUserId,
+        userName: currentUserEmail,
+        action: 'initial_report_created',
+        timestamp: now
+      }
+    ],
     summary: {
       totalChecklistItems: project.checklistItems.length,
       totalFindings: findings.length,

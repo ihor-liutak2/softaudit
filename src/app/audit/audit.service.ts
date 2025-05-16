@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { Firestore, collection, collectionData, doc, setDoc, deleteDoc, getDocs, query, where, getDoc } from '@angular/fire/firestore';
 import { VOCABULARY_SECTORS } from '../core/utils/vocabulary';
 import { COMPANY_SEEDS } from '../core/utils/companies';
-import { Sector, Company, AuditProject, AuditChecklistItem, AuditFinding, AuditFindingTemplate } from '../core/general/general.types';
+import { Sector, Company, AuditProject, AuditChecklistItem, AuditFinding, AuditFindingTemplate, AuditUserRole } from '../core/general/general.types';
 import { AUDIT_CHECKLIST } from '../core/utils/audit';
 import { AUDIT_FINDING_TEMPLATES } from '../core/utils/audit-finding';
 
@@ -129,22 +129,38 @@ export class AuditService {
   // AuditFinding methods
   // --------------------------
 
-  async getFindingsForProject(projectId: string): Promise<AuditFinding[]> {
-    const findingsRef = collection(this.firestore, 'auditFindings');
-    const q = query(findingsRef, where('projectId', '==', projectId));
-    const snap = await getDocs(q);
-  
-    return snap.docs.map(doc => doc.data() as AuditFinding);
-  }
-  
-  async saveFinding(finding: AuditFinding): Promise<void> {
-    const findingRef = doc(this.firestore, 'auditFindings', finding.id);
-    await setDoc(findingRef, finding);
-  }
+ async getFindingsForProject(projectId: string): Promise<AuditFinding[]> {
+  const findingsRef = collection(this.firestore, `auditFindings/${projectId}/findings`);
+  const snap = await getDocs(findingsRef);
 
-  async deleteFinding(findingId: string): Promise<void> {
-    const findingRef = doc(this.firestore, 'auditFindings', findingId);
-    await deleteDoc(findingRef);
-  }
+  return snap.docs.map(doc => doc.data() as AuditFinding);
+}
+
+  
+async saveFinding(
+  finding: AuditFinding,
+  currentUser: { userId: string; userName?: string; role: AuditUserRole }
+): Promise<void> {
+  const findingRef = doc(this.firestore, `auditFindings/${finding.projectId}/findings/${finding.id}`);
+
+  const findingToSave = {
+    ...finding,
+    lastModifiedBy: {
+      userId: currentUser.userId,
+      userName: currentUser.userName,
+      role: currentUser.role,
+      modifiedAt: new Date().toISOString()
+    }
+  };
+
+  await setDoc(findingRef, findingToSave);
+}
+
+
+  async deleteFinding(projectId: string, findingId: string): Promise<void> {
+  const findingRef = doc(this.firestore, `auditFindings/${projectId}/findings/${findingId}`);
+  await deleteDoc(findingRef);
+}
+
   
 }

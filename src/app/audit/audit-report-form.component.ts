@@ -1,43 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { StoredAuditReport, StoredAuditReportFinding, AuditUserRole } from '../core/general/general.types';
+import { canReviewFindings } from './audit-report.utils';
 
-type StoredAuditReport = {
-  id: string;
-  projectId: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt?: string;
-  status: 'draft' | 'submitted' | 'approved';
-  findings: StoredReportFinding[];
-  summary: {
-    totalChecklistItems: number;
-    totalFindings: number;
-    criticalCount: number;
-    highCount: number;
-    mediumCount: number;
-    lowCount: number;
-    unresolvedFindings: number;
-    acceptedCount: number;
-    needsWorkCount: number;
-  };
-};
-
-type StoredReportFinding = {
-  findingId: string;
-  checklistItemId: string;
-  reviewerComments?: string;
-  correctionPlan?: string;
-  statusAfterReview?: 'accepted' | 'needs_work' | 'rejected';
-  resolvedBy?: string;
-  resolvedAt?: string;
-  snapshot?: {
-    title: string;
-    description: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
-    detectedAt: string;
-  };
-};
 
 @Component({
   selector: 'app-audit-report-form',
@@ -96,19 +62,24 @@ type StoredReportFinding = {
 
         <p class="text-muted mb-2"><small>{{ f.snapshot?.description }}</small></p>
 
+        <div *ngIf="f.lastModifiedBy" class="mb-2 text-muted">
+          <i class="bi bi-person-check"></i>
+          Last modified by {{ f.lastModifiedBy.userName }} ({{ f.lastModifiedBy.role }}) at {{ f.lastModifiedBy.modifiedAt | date:'short' }}
+        </div>
+
         <div class="mb-2">
           <label class="form-label fw-bold">Reviewer Comments</label>
-          <textarea [(ngModel)]="f.reviewerComments" class="form-control" rows="2"></textarea>
+          <textarea [(ngModel)]="f.reviewerComments" class="form-control" rows="2" [readonly]="!canReview"></textarea>
         </div>
 
         <div class="mb-2">
           <label class="form-label fw-bold">Correction Plan</label>
-          <textarea [(ngModel)]="f.correctionPlan" class="form-control" rows="2"></textarea>
+          <textarea [(ngModel)]="f.correctionPlan" class="form-control" rows="2" [readonly]="!canReview"></textarea>
         </div>
 
         <div class="mb-2">
           <label class="form-label fw-bold">Status After Review</label>
-          <select [(ngModel)]="f.statusAfterReview" class="form-select">
+          <select [(ngModel)]="f.statusAfterReview" class="form-select" [disabled]="!canReview">
             <option [ngValue]="undefined">-- Select --</option>
             <option value="accepted">Accepted</option>
             <option value="needs_work">Needs Work</option>
@@ -117,7 +88,7 @@ type StoredReportFinding = {
         </div>
       </div>
 
-      <button class="btn btn-success w-100 mt-3" (click)="save.emit(report)">
+      <button class="btn btn-success w-100 mt-3" (click)="save.emit(report)" [disabled]="!canReview">
         <i class="bi bi-save"></i> Save Report
       </button>
     </div>
@@ -125,5 +96,12 @@ type StoredReportFinding = {
 })
 export class AuditReportFormComponent {
   @Input() report!: StoredAuditReport;
+  @Input() userRole: AuditUserRole = 'external_observer';
+  @Input() readOnly = false;
+
   @Output() save = new EventEmitter<StoredAuditReport>();
+
+  get canReview(): boolean {
+    return canReviewFindings(this.userRole);
+  }
 }
