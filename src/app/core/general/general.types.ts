@@ -54,6 +54,14 @@ export type AuditFinding = {
   notes?: string;              // Additional notes (optional)
 };
 
+// Expanded roles with change tracking for audit operations
+export type AuditUserRole =
+  | 'auditor'
+  | 'quality_manager' // includes compliance responsibilities
+  | 'system_owner'
+  | 'external_observer'
+  | 'admin';
+
 
 export type AuditProject = {
   id: string;
@@ -73,7 +81,7 @@ export type AuditProject = {
   // Optional fields for role-based collaboration and approval process
   companyRepresentatives?: {
     name: string;
-    role: 'quality_manager' | 'system_owner' | 'compliance_officer' | 'external_observer';
+    role: AuditUserRole;
     email?: string;
   }[];
 
@@ -95,15 +103,6 @@ export type Sector = {
   name: string;  // Human-readable sector name (Capitalized)
   description: string;
 };
-
-
-// Expanded roles with change tracking for audit operations
-export type AuditUserRole =
-  | 'auditor'
-  | 'quality_manager' // includes compliance responsibilities
-  | 'system_owner'
-  | 'external_observer'
-  | 'admin';
 
 export type AuditRoleActionLog = {
   role: AuditUserRole;

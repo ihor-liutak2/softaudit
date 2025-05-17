@@ -14,6 +14,7 @@ import { verificationRoutes } from './verification/verification.routes';
 import { adminRoutes } from './admin/admin.routes';
 
 import { StaticPageComponent } from './app-static-page';
+import { reqSpecsRoutes } from './requirements_specs/req-specs.routes';
 
 function authGuard() {
   const userService = inject(UserService);
@@ -36,6 +37,7 @@ export const routes: Routes = [
   { path: 'audit', children: auditRoutes, canActivate: [authGuard] },
   { path: 'validation', children: validationRoutes, canActivate: [authGuard] },
   { path: 'verification', children: verificationRoutes, canActivate: [authGuard] },
+  { path: 'req-specs', children: reqSpecsRoutes, canActivate: [authGuard] },
   { path: 'admin', children: adminRoutes, canActivate: [authGuard] },
 
   // Static pages (public)

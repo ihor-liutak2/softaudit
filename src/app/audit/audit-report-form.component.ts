@@ -101,7 +101,9 @@ export class AuditReportFormComponent {
 
   @Output() save = new EventEmitter<StoredAuditReport>();
 
-  get canReview(): boolean {
-    return canReviewFindings(this.userRole);
-  }
+get canReview(): boolean {
+  return !this.readOnly;
+}
+
+
 }

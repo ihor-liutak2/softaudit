@@ -12,10 +12,10 @@ import { RouterModule } from '@angular/router';
     <div class="p-3 border rounded bg-light mb-4">
       <div class="row g-2">
         <div class="col">
-          <input type="text" class="form-control" placeholder="Search user (email)" [(ngModel)]="searchUser">
+          <input type="text" class="form-control" placeholder="Search user (email)" [ngModel]="searchUser()" (ngModelChange)="searchUser.set($event)">
         </div>
         <div class="col">
-          <select class="form-select" [(ngModel)]="filterCompany">
+          <select class="form-select" [ngModel]="filterCompany()" (ngModelChange)="filterCompany.set($event)">
             <option value="">All companies</option>
             @for (company of companies; track company.id) {
               <option [value]="company.id">{{ company.name }}</option>
@@ -23,13 +23,13 @@ import { RouterModule } from '@angular/router';
           </select>
         </div>
         <div class="col">
-          <input type="date" class="form-control" [(ngModel)]="filterStartFrom">
+          <input type="date" class="form-control" [ngModel]="filterStartFrom()" (ngModelChange)="filterStartFrom.set($event)">
         </div>
         <div class="col">
-          <input type="date" class="form-control" [(ngModel)]="filterStartTo">
+          <input type="date" class="form-control" [ngModel]="filterStartTo()" (ngModelChange)="filterStartTo.set($event)">
         </div>
         <div class="col">
-          <select class="form-select" [(ngModel)]="filterStatus">
+          <select class="form-select" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
             <option value="">All statuses</option>
             <option value="planned">Planned</option>
             <option value="active">Active</option>
@@ -90,32 +90,32 @@ export class AuditProjectTableComponent {
   @Output() editProject = new EventEmitter<AuditProject>();
   @Output() manageFindings = new EventEmitter<AuditProject>();
 
-  searchUser = '';
-  filterCompany = '';
-  filterStartFrom = '';
-  filterStartTo = '';
-  filterStatus = '';
+  searchUser = signal('');
+  filterCompany = signal('');
+  filterStartFrom = signal('');
+  filterStartTo = signal('');
+  filterStatus = signal('');
 
   filteredProjects = computed(() => {
     return this.projects.filter(project => {
 
-      if (this.searchUser && !project.auditTeam.some(email => email.toLowerCase().includes(this.searchUser.toLowerCase()))) {
+      if (this.searchUser() && !project.auditTeam.some(email => email.toLowerCase().includes(this.searchUser().toLowerCase()))) {
         return false;
       }
 
-      if (this.filterCompany && project.companyId !== this.filterCompany) {
+      if (this.filterCompany() && project.companyId !== this.filterCompany()) {
         return false;
       }
 
-      if (this.filterStartFrom && project.startDate < this.filterStartFrom) {
+      if (this.filterStartFrom() && project.startDate < this.filterStartFrom()) {
         return false;
       }
 
-      if (this.filterStartTo && project.startDate > this.filterStartTo) {
+      if (this.filterStartTo() && project.startDate > this.filterStartTo()) {
         return false;
       }
 
-      if (this.filterStatus && project.status !== this.filterStatus) {
+      if (this.filterStatus() && project.status !== this.filterStatus()) {
         return false;
       }
 

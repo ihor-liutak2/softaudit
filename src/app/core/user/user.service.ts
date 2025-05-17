@@ -60,4 +60,5 @@ export class UserService {
   get userEmail() {
     return this.currentUser?.email || '';
   }
+
 }

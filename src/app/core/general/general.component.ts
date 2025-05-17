@@ -76,7 +76,14 @@ export class GeneralComponent {
       logo: '/assets/logos/softverify.png',
       color: '#9D4349',
       description: 'Check conformity and performance of software solutions.'
-    }
+    },
+    {
+    name: 'Requirements & Specs',
+    link: '/req-specs',
+    logo: '/assets/logos/requirements.png',
+    color: '#782F40',
+    description: 'Capture, refine, and manage software requirements and specifications.'
+  }
   ];
 
   // Add Admin module if user is admin

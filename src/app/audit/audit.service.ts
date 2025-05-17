@@ -41,13 +41,17 @@ export class AuditService {
   }
 
   /**
-   * Load companies data from predefined seeds
+   * Load companies data from firebase
    */
-  loadCompanies(): void {
-    if (this.companies().length) return;
 
-    this.companies.set(COMPANY_SEEDS);
-  }
+async loadCompanies(): Promise<void> {
+  if (this.companies().length) return;
+
+  const snap = await getDocs(collection(this.firestore, 'companies'));
+  const loaded = snap.docs.map(doc => doc.data() as Company);
+  this.companies.set(loaded);
+}
+
 
   loadChecklistItems(): void {
     if (this.checklistItems().length) return;

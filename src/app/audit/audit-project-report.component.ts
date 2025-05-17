@@ -7,6 +7,8 @@ import { AuditFinding, AuditProject, StoredAuditReport, AuditUserRole } from '..
 import { FormsModule } from '@angular/forms';
 import { buildEmptyAuditReport } from './audit-build-empty-audit-report.function';
 import { AuditReportService } from './audit-report.service';
+import { UserService } from '../core/user/user.service';
+import { getAuth } from '@angular/fire/auth';
 
 @Component({
   selector: 'app-audit-project-report',
@@ -83,13 +85,14 @@ export class AuditProjectReportComponent implements OnInit {
   projectId = '';
   report!: StoredAuditReport;
   project!: AuditProject;
-  currentUserRole: AuditUserRole = 'quality_manager'; // Replace with real role logic
+  currentUserRole: AuditUserRole = 'external_observer';
   showRoles = signal(false);
 
   constructor(
     private route: ActivatedRoute,
     private firestore: Firestore,
-    private auditReportService: AuditReportService
+    private auditReportService: AuditReportService,
+    private userService: UserService
   ) {}
 
   toggleCompanyRoles() {
@@ -104,6 +107,7 @@ export class AuditProjectReportComponent implements OnInit {
   }
 
   hasRole(role: AuditUserRole): boolean {
+    if (this.currentUserRole === 'admin') return true;
     return this.project?.companyRepresentatives?.some(rep => rep.role === role) ?? false;
   }
 
@@ -113,9 +117,24 @@ export class AuditProjectReportComponent implements OnInit {
 
   async ngOnInit() {
     this.projectId = this.route.snapshot.paramMap.get('id') || '';
+
     const projectSnap = await getDoc(doc(this.firestore, 'auditProjects', this.projectId));
     if (!projectSnap.exists()) return;
     this.project = projectSnap.data() as AuditProject;
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (user && !this.userService.user) {
+      await this.userService.loadUser(user.uid);
+    }
+
+    if (this.userService.user?.role === 'admin') {
+      this.currentUserRole = 'admin';
+    } else {
+      const email = this.userService.user?.email?.toLowerCase() || '';
+      const rep = this.project.companyRepresentatives?.find(r => r.email?.toLowerCase() === email);
+      this.currentUserRole = rep?.role || 'external_observer';
+    }
 
     const report = await this.auditReportService.getReportById(this.projectId);
 
@@ -123,11 +142,12 @@ export class AuditProjectReportComponent implements OnInit {
       this.report = report;
     } else {
       const findingsSnap = await getDocs(query(
-        collection(this.firestore, `auditFindings/${this.projectId}/findings`)
+        collection(this.firestore, 'auditFindings'),
+        where('projectId', '==', this.projectId)
       ));
       const findings = findingsSnap.docs.map(d => d.data() as AuditFinding);
 
-      this.report = buildEmptyAuditReport(this.project, findings, 'unknown@system');
+      this.report = buildEmptyAuditReport(this.project, findings, this.userService.userEmail);
       await this.auditReportService.createReport(this.report);
     }
   }
