@@ -1,1 +1,55 @@
 /* You can add global styles to this file, and also import other style files */
+.static-page amp-img {
+  max-width: 100%;
+  height: auto;
+}
+
+.static-page {
+  font-family: 'Inter', sans-serif;
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  line-height: 1.6;
+}
+
+.static-page h1, .static-page h2, .static-page h3 {
+  color: #E30B5D;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.static-page p {
+  font-size: 1.2rem;
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+.static-page .section {
+  margin-bottom: 3rem;
+}
+
+.static-page .feature-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.static-page .feature-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-color: #E30B5D;
+}
+
+.static-page .feature-icon {
+  font-size: 2rem;
+  color: #E30B5D;
+  margin-bottom: 1rem;
+}
+
+.custom-static-container {
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+

@@ -40,7 +40,7 @@ export const routes: Routes = [
   { path: 'req-specs', children: reqSpecsRoutes, canActivate: [authGuard] },
   { path: 'admin', children: adminRoutes, canActivate: [authGuard] },
 
-  // Static pages (public)
+   // Static pages (public)
   { path: '', redirectTo: 'page/home', pathMatch: 'full' },
   { path: 'page/:page', component: StaticPageComponent },
 

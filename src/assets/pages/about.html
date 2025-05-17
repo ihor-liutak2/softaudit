@@ -1,97 +1,95 @@
-<!DOCTYPE html>
-<html lang="uk">
+<!doctype html>
+<html ⚡ lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <script async src="https://cdn.ampproject.org/v0.js"></script>
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
   <title>SoftAssure - Про нас</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
+  <link rel="canonical" href="https://yourdomain.com/page/about">
+  <link rel="preload" as="image" href="/assets/logos/softassure.png">
+  <style amp-custom>
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #FFFFFF;
-      color: #333333;
+      font-family: sans-serif;
       margin: 0;
       padding: 0;
+      color: #333;
+      background-color: #fff;
     }
     .navbar {
-      background-color: #FFFFFF;
-      border-bottom: 1px solid #E0E0E0;
-      min-height: 150px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #e0e0e0;
     }
     .navbar-brand {
       font-weight: 700;
+      font-size: 2rem;
       color: #E30B5D;
-      font-size: 3rem;
+      display: flex;
+      align-items: center;
     }
-    .nav-link {
-      color: #333333;
-      font-size: 1.75rem;
-      font-weight: 500;
+    .navbar-brand amp-img {
+      margin-right: 0.75rem;
     }
-    .nav-link:hover {
+    .nav-links a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      color: #333;
+      font-size: 1.2rem;
+    }
+    .nav-links a:hover {
       color: #E30B5D;
     }
-    .page-title {
+    .container {
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .container h2, .container h3 {
       color: #E30B5D;
-      font-size: 3rem;
-      font-weight: 700;
     }
     .lead-text {
-      font-size: 1.5rem;
-      color: #666666;
+      font-size: 1.25rem;
+      color: #666;
+      margin-bottom: 2rem;
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<nav class="navbar navbar-expand-lg">
-  <div class="container-fluid px-5">
-    <a class="navbar-brand d-flex align-items-center" routerLink="/page/home">
-      <img src="assets/logos/softassure.png" alt="SoftAssure" height="80" class="me-3">
-    </a>
-    <div class="collapse navbar-collapse justify-content-end">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="/page/home">Головна</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/page/about">Про нас</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/login">Увійти</a>
-        </li>
-      </ul>
-    </div>
+<header class="navbar">
+  <div class="navbar-brand">
+    <amp-img src="/assets/logos/softassure.webp" width="60" height="60" layout="fixed" alt="SoftAssure"></amp-img>
+    SoftAssure
   </div>
-</nav>
+  <div class="nav-links">
+    <a href="/page/home">Головна</a>
+    <a href="/page/about">Про нас</a>
+    <a href="/login">Увійти</a>
+  </div>
+</header>
 
-<!-- Main Content -->
-<div class="container py-5 text-center">
-  <h2 class="fw-bold mb-4" style="color:#E30B5D;">Про SoftAssure</h2>
-
-  <p class="lead-text mb-5">
-    SoftAssure — це сучасна та гнучка платформа для аудиту та вдосконалення програмного забезпечення.
-    Наша мета — допомагати компаніям підвищувати якість коду, забезпечувати відповідність стандартам
-    та гарантувати стабільність і безпеку цифрових рішень.
+<main class="container">
+  <h2>Про SoftAssure</h2>
+  <p class="lead-text">
+    SoftAssure — це сучасна платформа для аудиту та вдосконалення програмного забезпечення. 
+    Наша мета — підвищення якості коду та гарантія безпеки цифрових рішень.
   </p>
 
-  <h3 class="fw-bold mb-3" style="color:#E30B5D;">Хто стоїть за проєктом</h3>
-  <p class="lead-text mb-5">
-    SoftAssure створено та підтримується <strong>Ігорем Лютаком</strong> — доктором технічних наук,
-    професором Івано-Франківського національного технічного університету нафти і газу.
+  <h3>Хто стоїть за проєктом</h3>
+  <p class="lead-text">
+    SoftAssure створено <strong>Ігорем Лютаком</strong> — доктором технічних наук, професором ІФНТУНГ.
     <br>
     <a href="https://nung.edu.ua/person/lyutak-igor" target="_blank">Детальніше про розробника →</a>
   </p>
 
-  <h3 class="fw-bold mb-3" style="color:#E30B5D;">Наше бачення</h3>
+  <h3>Наше бачення</h3>
   <p class="lead-text">
-    Ми віримо, що якісне програмне забезпечення — це фундамент успіху кожної організації. <br>
-    SoftAssure прагне зробити процеси перевірки, валідації та аудиту простими, прозорими та ефективними для наших клієнтів.
+    Ми віримо, що якісне ПЗ — це фундамент успіху. SoftAssure робить аудит і валідацію ефективними та доступними.
   </p>
-</div>
+</main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
