@@ -15,35 +15,47 @@
       color: #333;
       background-color: #fff;
     }
-    .navbar {
+   .navbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid #eee;
+      background-color: #fff;
     }
+
     .navbar-brand {
-      font-weight: 700;
-      font-size: 2rem;
-      color: #E30B5D;
       display: flex;
       align-items: center;
-    }
-    .navbar-brand amp-img {
-      margin-right: 0.75rem;
-    }
-    .nav-links a {
-      margin-left: 1.5rem;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #E30B5D;
       text-decoration: none;
-      color: #333;
-      font-size: 1.2rem;
     }
+
+    .navbar-brand amp-img {
+      margin-right: 1rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav-links a {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #333;
+      text-decoration: none;
+    }
+
     .nav-links a:hover {
       color: #E30B5D;
     }
+
     .container {
       padding: 2rem;
-      max-width: 900px;
+      max-width: 1200px;
       margin: 0 auto;
       text-align: center;
     }
@@ -59,17 +71,17 @@
 </head>
 <body>
 
-<header class="navbar">
-  <div class="navbar-brand">
-    <amp-img src="/assets/logos/softassure.webp" width="60" height="60" layout="fixed" alt="SoftAssure"></amp-img>
-    SoftAssure
-  </div>
-  <div class="nav-links">
-    <a href="/page/home">Головна</a>
-    <a href="/page/about">Про нас</a>
-    <a href="/login">Увійти</a>
-  </div>
-</header>
+  <header class="navbar">
+    <a href="/page/home" class="navbar-brand">
+      <amp-img src="/assets/logos/softassure.webp" width="50" height="50" layout="fixed" alt="SoftAssure"></amp-img>
+      SoftAssure
+    </a>
+    <div class="nav-links">
+      <a href="/page/home">Головна</a>
+      <a href="/page/about">Про нас</a>
+      <a href="/login">Увійти</a>
+    </div>
+  </header>
 
 <main class="container">
   <h2>Про SoftAssure</h2>
