@@ -11,9 +11,14 @@ export type ReqSpecsItem = {
   updatedAt?: string;            // ISO timestamp when last updated
   createdBy: string;             // User ID or email who created this entry
 
+  parentId?: string;             // Optional parent requirement ID (for hierarchy)
   linkedTo?: string[];           // Optional IDs of linked items (e.g., validations, features)
   notes?: string;                // Optional notes or rationale
+
+  documentUrl?: string;          // Optional URL to a supporting document
+  documentDescription?: string; // Optional description of the linked document
 };
+
 
 
 

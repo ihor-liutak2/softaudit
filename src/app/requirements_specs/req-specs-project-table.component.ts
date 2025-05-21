@@ -72,8 +72,12 @@ import { Company } from '../core/general/general.types';
                 <i class="bi bi-pencil"></i> Edit
               </button>
 
-              <a [routerLink]="['/req-specs/project', project.id]" class="btn btn-sm btn-outline-dark">
-                <i class="bi bi-eye"></i> View
+              <a [routerLink]="['/req-specs/project', project.id]" class="btn btn-sm btn-outline-dark me-2">
+                <i class="bi bi-eye"></i> Specs
+              </a>
+
+              <a [routerLink]="['/req-specs/view', project.id]" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-list-ul"></i> View Items
               </a>
             </td>
           </tr>

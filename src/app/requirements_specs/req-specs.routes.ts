@@ -7,6 +7,8 @@ import { ReqSpecsAddProjectComponent } from './req-specs-add-project.component';
 import { ReqSpecsProjectDetailComponent } from './req-specs-project-detail.component';
 
 import { UserService } from '../core/user/user.service';
+import { ReqSpecsViewComponent } from './req-specs-view.component';
+import { ReqSpecsItemEditComponent } from './req-specs-item-edit.component';
 
 // Guard for authenticated users
 function authGuard() {
@@ -39,6 +41,21 @@ export const reqSpecsRoutes: Routes = [
         path: 'project/:id',
         component: ReqSpecsProjectDetailComponent,
         title: 'Project Details'
+      },
+      {
+        path: 'view/:id',
+        component: ReqSpecsViewComponent,
+        title: 'Requirement Items'
+      },
+      {
+        path: 'project/:projectId/item',
+        component: ReqSpecsItemEditComponent,
+        title: 'New Requirement'
+      },
+      {
+        path: 'project/:projectId/item/:itemId',
+        component: ReqSpecsItemEditComponent,
+        title: 'Edit Requirement'
       }
     ]
   }
