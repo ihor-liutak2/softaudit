@@ -1,15 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { inject } from '@angular/core';
 import { UserService } from './user.service';
+import { ToastMessageComponent } from '../ui/toast-message.component';
+import { ToastService } from '../ui/toast.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, ToastMessageComponent],
   template: `
+   <app-toast-message #toaster position="bottom-right"></app-toast-message>
+
     <div class="container d-flex align-items-center justify-content-center min-vh-100">
       <div class="card p-4" style="width: 100%; max-width: 400px;">
         
@@ -36,25 +40,27 @@ import { UserService } from './user.service';
   `
 })
 export class LoginComponent {
+  private toastService = inject(ToastService);
+  private userService = inject(UserService);
+  private router = inject(Router);
 
   email = '';
   password = '';
   showPassword = false;
 
-  private userService = inject(UserService);
-  private router = inject(Router);
-
   async login() {
     if (!this.email || !this.password) {
-      alert("Please enter email and password");
+      this.toastService.show('Please enter email and password', 'warning');
       return;
     }
 
     try {
       await this.userService.login(this.email, this.password);
+      this.toastService.show('Login successful!', 'success');
       this.router.navigate(['/home']);
     } catch (err: any) {
-      alert("Login error: " + err.message);
+      this.toastService.show('Login failed: ' + err.message, 'danger');
     }
   }
 }
+
