@@ -74,7 +74,6 @@ export type AuditProject = {
   endDate?: string;
 
   status: 'planned' | 'active' | 'completed' | 'archived';
-  active: boolean;
 
   auditTeam: string[]; // Auditors (users with internal roles)
 

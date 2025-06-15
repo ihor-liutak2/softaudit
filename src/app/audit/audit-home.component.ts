@@ -1,9 +1,10 @@
-import { Component, OnInit, computed, signal, effect } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuditService } from './audit.service';
 import { AuditProjectTableComponent } from './audit-project-table.component';
-import { Company, AuditProject } from '../core/general/general.types';
+import { AuditProject } from '../core/general/general.types';
 import { Router } from '@angular/router';
+import { UserService } from '../core/user/user.service';
 
 @Component({
   selector: 'app-audit-home',
@@ -50,15 +51,24 @@ export class AuditHomeComponent implements OnInit {
 
   constructor(
     private auditService: AuditService,
+    private userService: UserService,
     private router: Router
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
     this.auditService.loadCompanies();
+
+    const user = this.userService.user;
   
-    this.auditService.loadAllAuditProjects().then(() => {
-      this.loading.set(false);
-    });
+    if (user) {
+      await this.auditService.loadAuditProjectsByUserEmail(user.email, user.role === 'admin');
+    } else {
+      // optionally redirect to login or show error
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.loading.set(false);
   }
 
   onEditProject(project: AuditProject) {

@@ -107,6 +107,38 @@ async loadCompanies(): Promise<void> {
     const snap = await getDoc(projectRef);
     return snap.exists() ? snap.data() as AuditProject : undefined;
   }
+
+  async loadAuditProjectsByUserEmail(userEmail: string, isAdmin: boolean): Promise<void> {
+  const projectsRef = collection(this.firestore, 'auditProjects');
+
+  if (isAdmin) {
+    // Admin sees all projects
+    const snap = await getDocs(projectsRef);
+    const loaded = snap.docs.map(doc => doc.data() as AuditProject);
+    this.projects.set(loaded);
+    return;
+  }
+
+  // Step 1: get projects where user is in auditTeam
+  const q1 = query(projectsRef, where('auditTeam', 'array-contains', userEmail));
+  const snap1 = await getDocs(q1);
+  const auditTeamProjects = snap1.docs.map(doc => doc.data() as AuditProject);
+
+  // Step 2: get ALL projects to manually filter companyRepresentatives and approvers by email
+  const snapAll = await getDocs(projectsRef);
+  const allProjects = snapAll.docs.map(doc => doc.data() as AuditProject);
+
+  const additionalProjects = allProjects.filter(project =>
+    (project.companyRepresentatives || []).some(rep => rep.email === userEmail) ||
+    (project.approvers || []).some(appr => appr.email === userEmail)
+  );
+
+  // Merge both lists and remove duplicates
+  const allRelevant = [...auditTeamProjects, ...additionalProjects];
+  const uniqueProjects = Array.from(new Map(allRelevant.map(p => [p.id, p])).values());
+
+  this.projects.set(uniqueProjects);
+}
   
 
   // -----------------------------

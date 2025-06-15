@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditProject, Company } from '../core/general/general.types';
 import { RouterModule } from '@angular/router';
+import { ConfirmDialogService } from '../core/ui/confirm-dialog.service';
 
 @Component({
   selector: 'app-audit-project-table',
@@ -49,7 +50,7 @@ import { RouterModule } from '@angular/router';
           <th>Start</th>
           <th>End</th>
           <th>Status</th>
-          <th>Active</th>
+          <th>Year</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -61,20 +62,30 @@ import { RouterModule } from '@angular/router';
             <td>{{ project.sector }}</td>
             <td>{{ project.startDate }}</td>
             <td>{{ project.endDate || '-' }}</td>
-            <td>{{ project.status }}</td>
             <td>
-              @if (project.active) {
-                <span class="badge bg-success">Active</span>
-              } @else {
-                <span class="badge bg-secondary">Inactive</span>
-              }
+              <span 
+                class="badge"
+                [ngClass]="{
+                  'bg-secondary': project.status === 'planned',
+                  'bg-primary': project.status === 'active',
+                  'bg-success': project.status === 'completed',
+                  'bg-dark': project.status === 'archived'
+                }"
+              >
+                {{ project.status }}
+              </span>
             </td>
             <td>
-              <button class="btn btn-outline-primary btn-sm me-2" (click)="editProject.emit(project)">Edit</button>
-              <button class="btn btn-outline-secondary btn-sm me-2" (click)="manageFindings.emit(project)">Manage Findings</button>
+              {{ project.createdAt ? (project.createdAt | date: 'yyyy') : '-' }}
+            </td>
+            <td>
+              <button class="btn btn-outline-primary btn-sm me-1" (click)="editProject.emit(project)">Edit</button>
+              <button class="btn btn-outline-secondary btn-sm me-1 mt-1" (click)="manageFindings.emit(project)">Manage Findings</button>
+              <div class="w-100 pt-1"></div>
               <a [routerLink]="['/audit/report', project.id]" class="btn btn-outline-dark btn-sm">
                 <i class="bi bi-file-earmark-text"></i> Report
               </a>
+              <button class="btn btn-outline-danger btn-sm ms-1" (click)="onDelete(project)">Delete</button>
             </td>
           </tr>
         }
@@ -89,12 +100,15 @@ export class AuditProjectTableComponent {
 
   @Output() editProject = new EventEmitter<AuditProject>();
   @Output() manageFindings = new EventEmitter<AuditProject>();
+  @Output() deleteProject = new EventEmitter<AuditProject>();
 
   searchUser = signal('');
   filterCompany = signal('');
   filterStartFrom = signal('');
   filterStartTo = signal('');
   filterStatus = signal('');
+
+  constructor(private confirmDialog: ConfirmDialogService) {}
 
   filteredProjects = computed(() => {
     return this.projects.filter(project => {
@@ -127,4 +141,20 @@ export class AuditProjectTableComponent {
     const company = this.companies.find(c => c.id === companyId);
     return company?.name || companyId;
   }
+
+  onDelete(project: AuditProject): void {
+    this.confirmDialog.confirm({
+      title: 'Delete Project',
+      message: `Are you sure you want to delete project "${project.title}"?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmButtonClass: 'btn-danger',
+      headerClass: 'bg-danger text-white'
+    }).then((confirmed: boolean) => {
+      if (confirmed) {
+        this.deleteProject.emit(project);
+      }
+    });
+  }
+
 }

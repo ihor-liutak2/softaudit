@@ -129,6 +129,7 @@ export class ProjectFormComponent implements OnChanges {
       this.sectorId = this.project.sector || '';  // Note: sector -> sectorId
       this.startDate = this.project.startDate || '';
       this.endDate = this.project.endDate || '';
+      this.status = this.project.status || '';
       this.auditTeamInput = (this.project.auditTeam || []).join(', ');
     }
   }
@@ -159,7 +160,6 @@ export class ProjectFormComponent implements OnChanges {
       startDate: this.startDate,
       endDate: this.endDate || undefined,
       status: this.status as 'planned' | 'active' | 'completed' | 'archived',
-      active: this.project?.active ?? true,
       auditTeam,
       checklistItems: this.project?.checklistItems || [],
       createdAt: this.project?.createdAt || new Date().toISOString(),
