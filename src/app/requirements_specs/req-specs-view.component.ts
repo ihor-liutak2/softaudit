@@ -1,20 +1,18 @@
 import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
 import {
   Firestore,
   collection,
   query,
   where,
-  collectionData,
-  CollectionReference,
-  DocumentData,
   orderBy,
+  collectionData,
 } from '@angular/fire/firestore';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReqSpecsItem } from './req-specs.types';
 import { ReqSpecsTableComponent } from './req-specs-table.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { COLL_REQSPECS } from './req-specs.collections';
 
 @Component({
   selector: 'app-reqspecs-view',
@@ -24,47 +22,53 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
     <div class="container py-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0">Requirement Specifications</h3>
-        <a [routerLink]="['/req-specs/project', projectId, 'item']" class="btn btn-outline-success">
-          <i class="bi bi-plus-lg me-1"></i> Add Requirement
+        <a
+          class="btn btn-outline-success"
+          [routerLink]="['/req-specs/project', projectId, 'item']">
+          <i class="bi bi-plus-lg me-1"></i>
+          Add Requirement
         </a>
       </div>
 
-      @if (items().length > 0) {
+      <ng-container *ngIf="items().length; else empty">
         <app-req-specs-table [items]="items()"></app-req-specs-table>
-      } @else {
+      </ng-container>
+
+      <ng-template #empty>
         <p class="text-muted">No requirements found for this project.</p>
-      }
+      </ng-template>
     </div>
   `
 })
 export class ReqSpecsViewComponent implements OnInit {
+  // DI
   private readonly route = inject(ActivatedRoute);
   private readonly firestore = inject(Firestore);
   private readonly destroyRef = inject(DestroyRef);
 
+  // Route param and data
   projectId = '';
   items = signal<ReqSpecsItem[]>([]);
 
   ngOnInit() {
+    // Read project id from route
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
-    if (!this.projectId) {
-      this.items.set([]);
-      return;
-    }
 
-    const reqRef: CollectionReference<DocumentData> = collection(this.firestore, 'reqspecs');
+    // Build Firestore query (filter by project and sort by last update)
+    const ref = collection(this.firestore, COLL_REQSPECS);
     const q = query(
-      reqRef,
+      ref,
       where('projectId', '==', this.projectId),
-      orderBy('updatedAt', 'desc') // optional
+      orderBy('updatedAt', 'desc')
     );
 
-    collectionData(q, { idField: 'id' })
+    // Subscribe to live data and keep it typed
+    collectionData<ReqSpecsItem>(q as any, { idField: 'id' })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (data) => this.items.set(data as ReqSpecsItem[]),
+        next: (data) => this.items.set(data ?? []),
         error: (err) => {
-          console.error('Failed to load reqspecs:', err);
+          console.error('[ReqSpecsView] load error', err);
           this.items.set([]);
         },
       });
