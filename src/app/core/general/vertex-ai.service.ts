@@ -1,29 +1,30 @@
 import { Injectable } from '@angular/core';
 import { from, Observable } from 'rxjs';
-import { initializeApp } from 'firebase/app';
-import { getVertexAI, getGenerativeModel } from 'firebase/vertexai';
-import { environment } from '../../environment';
+import { FirebaseApp } from '@angular/fire/app';
+import {
+  getAI,
+  getGenerativeModel,
+  VertexAIBackend,
+  GenerativeModel,
+  GenerateContentResult,
+} from 'firebase/ai';
 
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class VertexAiService {
-  private model: any;
+  private model: GenerativeModel;
 
-  constructor() {
-    const app = initializeApp(environment.firebase);
-    const vertexAI = getVertexAI(app);
-    this.model = getGenerativeModel(vertexAI, { model: 'gemini-2.0-flash' });
+  constructor(app: FirebaseApp) {
+    // Use the already created [DEFAULT] app from DI
+    const ai = getAI(app, { backend: new VertexAIBackend('us-central1') });
+    this.model = getGenerativeModel(ai, { model: 'gemini-2.5-flash' });
   }
 
+  // Returns one-paragraph recommendation for an audit finding
   suggestFindingNotes(title: string, description: string): Observable<string> {
     const prompt = this.buildDetailedPrompt(title, description);
-
-    const resultPromise: Promise<string> = this.model.generateContent(prompt).then((result: any) => {
-      return result?.response?.text() ?? 'No suggestion received.';
-    });
-
+    const resultPromise = this.model
+      .generateContent(prompt)
+      .then((res: GenerateContentResult) => res.response.text() ?? 'No suggestion received.');
     return from(resultPromise);
   }
 

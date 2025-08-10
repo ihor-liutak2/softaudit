@@ -1,10 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Firestore, collection, collectionData, doc, setDoc, getDoc, updateDoc } from '@angular/fire/firestore';
+
+import {
+  Firestore,
+  collection,
+  collectionData,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  CollectionReference,
+  DocumentData,
+} from '@angular/fire/firestore';
+
 import { COMPANY_SEEDS } from '../core/utils/companies';
-import { Company } from "../core/general/general.types";
+import { Company } from '../core/general/general.types';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-admin-companies',
@@ -70,25 +83,33 @@ import { Company } from "../core/general/general.types";
 })
 export class AdminCompaniesComponent {
 
+  private readonly firestore = inject(Firestore);
+  private readonly destroyRef = inject(DestroyRef);
+
   status = '';
   companies: Company[] = [];
   editing?: Company;
 
-  constructor(private firestore: Firestore) {
+  constructor() {
     this.loadCompanies();
   }
 
   async loadCompanies() {
-    const ref = collection(this.firestore, 'companies');
-    collectionData(ref, { idField: 'id' }).subscribe(data => {
-      this.companies = data as Company[];
-    });
+    const ref: CollectionReference<DocumentData> = collection(this.firestore, 'companies');
+    collectionData(ref, { idField: 'id' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => this.companies = data as Company[],
+        error: (err) => this.status = `Load error: ${err?.message || err}`
+      });
   }
 
   async uploadCompanies() {
     let added = 0, skipped = 0;
 
     for (const company of COMPANY_SEEDS) {
+      // ensure company.id exists in your seeds; otherwise generate one:
+      // const id = company.id || doc(collection(this.firestore, 'companies')).id;
       const docRef = doc(this.firestore, 'companies', company.id);
       const snap = await getDoc(docRef);
 

@@ -48,19 +48,68 @@ export class LoginComponent {
   password = '';
   showPassword = false;
 
-  async login() {
-    if (!this.email || !this.password) {
-      this.toastService.show('Please enter email and password', 'warning');
-      return;
-    }
+//   async login() {
+//     if (!this.email || !this.password) {
+//       this.toastService.show('Please enter email and password', 'warning');
+//       return;
+//     }
 
-    try {
-      await this.userService.login(this.email, this.password);
-      this.toastService.show('Login successful!', 'success');
-      this.router.navigate(['/home']);
-    } catch (err: any) {
-      this.toastService.show('Login failed: ' + err.message, 'danger');
-    }
+//     try {
+//       await this.userService.login(this.email, this.password);
+//       this.toastService.show('Login successful!', 'success');
+//       this.router.navigate(['/home']);
+//     } catch (err: any) {
+//       this.toastService.show('Login failed: ' + err.message, 'danger');
+//     }
+//   }
+
+
+// inside LoginComponent
+
+private maskEmail(email: string): string {
+  const [user, domain] = (email || '').split('@');
+  if (!user || !domain) return '(invalid email)';
+  if (user.length <= 2) return `${'*'.repeat(user.length)}@${domain}`;
+  return `${user[0]}${'*'.repeat(Math.max(1, user.length - 2))}${user[user.length - 1]}@${domain}`;
+}
+
+async login() {
+  if (!this.email || !this.password) {
+    this.toastService.show('Please enter email and password', 'warning');
+    console.warn('[LoginComponent] login(): missing email or password');
+    return;
   }
+
+  const t0 = performance.now();
+  console.groupCollapsed('%c[LoginComponent] login()', 'color:#0aa; font-weight:bold;');
+  console.debug('Input', { email: this.maskEmail(this.email), hasPassword: true });
+
+  try {
+    console.time('[LoginComponent] userService.login');
+    await this.userService.login(this.email, this.password);
+    console.timeEnd('[LoginComponent] userService.login');
+
+    console.info('Auth success', { userEmail: this.userService.userEmail });
+
+    this.toastService.show('Login successful!', 'success');
+
+    console.time('[LoginComponent] navigate(/home)');
+    const navigated = await this.router.navigate(['/home']);
+    console.timeEnd('[LoginComponent] navigate(/home)');
+    console.debug('Navigation result', { navigated });
+  } catch (err: any) {
+    console.error('[LoginComponent] login failed', {
+      message: err?.message ?? String(err),
+      stack: err?.stack,
+    });
+    this.toastService.show('Login failed: ' + (err?.message ?? err), 'danger');
+  } finally {
+    const ms = Math.round(performance.now() - t0);
+    console.debug('Total duration (ms)', ms);
+    console.groupEnd();
+  }
+}
+
+
 }
 

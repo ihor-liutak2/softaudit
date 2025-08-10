@@ -18,22 +18,22 @@ import { UserService } from '../core/user/user.service';
       <app-req-specs-item-form
         [projectId]="projectId"
         [createdBy]="userService.userEmail"
-        [model]="existingItem"
+        [model]="existingItem || undefined"
         (saved)="save($event)">
       </app-req-specs-item-form>
     </div>
   `
 })
 export class ReqSpecsItemEditComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private firestore = inject(Firestore);
-  public userService = inject(UserService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly firestore = inject(Firestore);
+  public readonly userService = inject(UserService);
 
   projectId = '';
   itemId: string | null = null;
   isEdit = false;
-  existingItem?: Partial<ReqSpecsItem>;
+  existingItem: ReqSpecsItem | null = null;
 
   async ngOnInit() {
     this.projectId = this.route.snapshot.paramMap.get('projectId') ?? '';
@@ -41,29 +41,45 @@ export class ReqSpecsItemEditComponent implements OnInit {
     this.isEdit = !!this.itemId;
 
     if (this.isEdit && this.itemId) {
-      const snap = await getDoc(doc(this.firestore, 'reqspecs', this.itemId));
+      const ref = doc(this.firestore, 'reqspecs', this.itemId);
+      const snap = await getDoc(ref);
       if (snap.exists()) {
         this.existingItem = snap.data() as ReqSpecsItem;
+      } else {
+        // If the item was not found, fall back to create mode
+        console.warn(`ReqSpecs item ${this.itemId} not found, switching to create mode`);
+        this.isEdit = false;
+        this.existingItem = null;
       }
     }
   }
 
   async save(item: ReqSpecsItem) {
-    const docRef = doc(this.firestore, 'reqspecs', item.id || crypto.randomUUID());
-    const payload = { ...item, id: docRef.id };
+    // ensure projectId preserved from route
+    const id = item.id || crypto.randomUUID();
+    const docRef = doc(this.firestore, 'reqspecs', id);
 
-    // Remove undefined fields like parentId if not set
-    if (!payload.parentId) {
-      delete payload.parentId;
-    }
+    const payload: ReqSpecsItem = {
+      ...item,
+      id,
+      projectId: this.projectId || item.projectId, // prefer route projectId
+    };
+
+    // drop undefined optional fields (e.g., parentId)
+    if (!payload.parentId) delete (payload as any).parentId;
 
     if (this.isEdit) {
-      await updateDoc(docRef, payload);
+      // updateDoc fails if doc doesn't exist — додали fallback
+      const exists = (await getDoc(docRef)).exists();
+      if (exists) {
+        await updateDoc(docRef, payload as any);
+      } else {
+        await setDoc(docRef, payload);
+      }
     } else {
       await setDoc(docRef, payload);
     }
 
-    alert('Requirement saved');
     this.router.navigate(['/req-specs/project', this.projectId]);
   }
 }

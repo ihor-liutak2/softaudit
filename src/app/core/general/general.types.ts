@@ -52,6 +52,13 @@ export type AuditFinding = {
   resolvedAt?: string;         // Date when resolved (optional)
 
   notes?: string;              // Additional notes (optional)
+
+  lastModifiedBy?: {
+    userId: string;
+    userName?: string;
+    role: AuditUserRole;
+    modifiedAt: string;
+  };
 };
 
 // Expanded roles with change tracking for audit operations

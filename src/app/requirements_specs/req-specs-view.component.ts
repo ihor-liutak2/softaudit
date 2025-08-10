@@ -1,10 +1,20 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Firestore, collection, query, where, collectionData } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  query,
+  where,
+  collectionData,
+  CollectionReference,
+  DocumentData,
+  orderBy,
+} from '@angular/fire/firestore';
 import { ReqSpecsItem } from './req-specs.types';
 import { ReqSpecsTableComponent } from './req-specs-table.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-reqspecs-view',
@@ -28,20 +38,35 @@ import { ReqSpecsTableComponent } from './req-specs-table.component';
   `
 })
 export class ReqSpecsViewComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private firestore = inject(Firestore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly firestore = inject(Firestore);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   items = signal<ReqSpecsItem[]>([]);
 
   ngOnInit() {
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
+    if (!this.projectId) {
+      this.items.set([]);
+      return;
+    }
 
-    const reqRef = collection(this.firestore, 'reqspecs');
-    const q = query(reqRef, where('projectId', '==', this.projectId));
+    const reqRef: CollectionReference<DocumentData> = collection(this.firestore, 'reqspecs');
+    const q = query(
+      reqRef,
+      where('projectId', '==', this.projectId),
+      orderBy('updatedAt', 'desc') // optional
+    );
 
-    collectionData(q, { idField: 'id' }).subscribe(data => {
-      this.items.set(data as ReqSpecsItem[]);
-    });
+    collectionData(q, { idField: 'id' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => this.items.set(data as ReqSpecsItem[]),
+        error: (err) => {
+          console.error('Failed to load reqspecs:', err);
+          this.items.set([]);
+        },
+      });
   }
 }
