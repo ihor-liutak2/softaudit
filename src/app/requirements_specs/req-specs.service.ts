@@ -83,28 +83,29 @@ export class ReqSpecsService {
    * - Always updates updatedAt
    * - Returns final project id
    */
-  async saveProject(project: ReqSpecsProject): Promise<string> {
-    const id = project.id ?? doc(this.projectsCol).id; // safer id generation
-    const ref = doc(this.projectsCol, id);
+async saveProject(project: ReqSpecsProject): Promise<string> {
+  // Treat "", "   ", null, undefined as missing id
+  const given = (project as any).id as string | undefined;
+  const id = (given && given.toString().trim().length) ? given : doc(this.projectsCol).id;
 
-    const existed = (await getDoc(ref)).exists();
+  const ref = doc(this.projectsCol, id);
+  const now = new Date().toISOString();
+  const payload: ReqSpecsProject = {
+    ...project,
+    id,
+    createdAt: project.createdAt ?? now,
+    updatedAt: now,
+  };
 
-    const payload: ReqSpecsProject = this.cleanProject({
-      ...project,
-      id,
-      status: project.status ?? 'draft',
-      createdAt: existed ? project.createdAt : project.createdAt ?? this.now(),
-      updatedAt: this.now(),
-    });
+  await setDoc(ref, payload, { merge: true });
 
-    await setDoc(ref, payload, { merge: true });
+  // Update local cache
+  const all = this.projects().filter(p => p.id !== id);
+  this.projects.set([...all, payload]);
 
-    // Update local cache
-    const all = this.projects().filter(p => p.id !== id);
-    this.projects.set([...all, payload]);
+  return id;
+}
 
-    return id;
-  }
 
   /** Deletes a project and updates local signal state */
   async deleteProject(projectId: string): Promise<void> {

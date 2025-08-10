@@ -48,6 +48,11 @@ export const reqSpecsRoutes: Routes = [
         title: 'Requirement Items'
       },
       {
+        path: 'project/:id/items',
+        component: ReqSpecsViewComponent,
+        title: 'Requirement Items'
+      },
+      {
         path: 'project/:projectId/item',
         component: ReqSpecsItemEditComponent,
         title: 'New Requirement'

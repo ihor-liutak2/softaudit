@@ -97,6 +97,14 @@ import { Company, Sector } from '../core/general/general.types';
                 <i class="bi bi-eye"></i> Open
               </a>
 
+              <!-- Items list -->
+              <a
+                [routerLink]="['/req-specs/view', project.id]"
+                class="btn btn-sm btn-outline-secondary me-2">
+                <i class="bi bi-list-ul"></i> Items
+              </a>
+
+              <!-- Add Item (у вас вже є потрібний маршрут) -->
               <a
                 [routerLink]="['/req-specs/project', project.id, 'item']"
                 class="btn btn-sm btn-outline-success">

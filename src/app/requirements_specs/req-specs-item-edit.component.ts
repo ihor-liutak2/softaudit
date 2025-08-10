@@ -8,6 +8,7 @@ import { ReqSpecsItem, UserRef, ISODate } from './req-specs.types';
 import { ReqSpecsItemFormComponent } from './req-specs-item-form.component';
 import { UserService } from '../core/user/user.service';
 import { COLL_REQSPECS } from './req-specs.collections';
+import { omitUndefinedDeep } from './req-specs-utils.function';
 
 @Component({
   selector: 'app-req-specs-item-edit',
@@ -82,45 +83,68 @@ export class ReqSpecsItemEditComponent implements OnInit {
 
   /** Save (create or update) the requirement */
   async save(item: ReqSpecsItem) {
-    // Generate/gather IDs and timestamps
     const id = this.itemId ?? crypto.randomUUID();
-    const now: ISODate = new Date().toISOString();
+    const ref = doc(this.firestore, `${COLL_REQSPECS}/${id}`);
 
-    // Ensure required refs are present
-    const createdBy: UserRef =
-      item.createdBy ||
-      this.currentUserRef ||
-      { uid: 'unknown' };
+    // Build acceptance criteria safely (empty -> undefined)
+    const ac = (item.acceptanceCriteria ?? [])
+      .map(s => (s ?? '').trim())
+      .filter(Boolean);
+    const acceptanceCriteria = ac.length ? ac : undefined;
 
-    const createdAt: ISODate = item.createdAt || now;
+    // Build standards safely (empty -> undefined)
+    const stds = (item.standards ?? [])
+      .map(s => ({
+        code: (s.code ?? '').trim(),
+        clause: (s.clause ?? '').trim() || undefined,
+        note: (s.note ?? '').trim() || undefined,
+      }))
+      .filter(s => !!s.code);
+    const standards = stds.length ? stds : undefined;
 
-    // Compose payload
+    // Build links safely (title must be string, url required)
+    type Link = { title: string; url: string };
+    const lnks = (item.links ?? [])
+      .map(l => {
+        const url = (l?.url ?? '').trim();
+        const title = (l?.title ?? '').trim(); // <- always string
+        if (!url) return null;
+        return { title, url } as Link;
+      })
+      .filter((v): v is Link => v !== null);
+    const links: Link[] | undefined = lnks.length ? lnks : undefined;
+
+    // Related and tags (empty -> undefined)
+    const related = (item.related ?? []).filter(Boolean);
+    const tags = (item.tags ?? []).map(t => t.trim()).filter(Boolean);
+
+    // Now payload matches the type exactly
     const payload: ReqSpecsItem = {
       ...item,
       id,
       projectId: this.projectId,
-      createdBy,
-      createdAt,
-      updatedAt: now,
+      acceptanceCriteria,
+      standards,
+      links,                                  // <- type-safe now
+      related: related.length ? related : undefined,
+      tags: tags.length ? tags : undefined,
+      parentId: item.parentId?.trim() || undefined,
+      order: item.order ?? undefined,
+      rationale: item.rationale?.trim() || undefined,
+      source: item.source?.trim() || undefined,
+      updatedAt: new Date().toISOString(),
+      createdAt: item.createdAt || new Date().toISOString(),
+      createdBy: item.createdBy || {
+        uid: this.userService.user?.uid ?? 'unknown',
+        name: this.userService.user?.displayName ?? undefined,
+        email: this.userService.user?.email ?? undefined,
+      },
     };
 
-    // Prune empty optional fields to keep documents tidy
-    const prune = (v: any) => (Array.isArray(v) ? (v.length ? v : undefined) : v);
-    (payload as any).parentId = payload.parentId || undefined;
-    (payload as any).order = (payload.order || payload.order === 0) ? payload.order : undefined;
-    payload.acceptanceCriteria = prune(payload.acceptanceCriteria);
-    payload.related = prune(payload.related);
-    payload.tags = prune(payload.tags);
-    payload.standards = prune(payload.standards);
-    payload.links = prune(payload.links);
-    payload.rationale = payload.rationale || undefined;
-    payload.source = payload.source || undefined;
+    // 🔑 Firestore-safe: remove every `undefined`
+    const clean = omitUndefinedDeep(payload);
 
-    // Persist
-    const ref = doc(this.firestore, `${COLL_REQSPECS}/${id}`);
-    await setDoc(ref, payload, { merge: true });
-
-    // Navigate back to project view
+    await setDoc(ref, clean, { merge: true });
     this.router.navigate(['/req-specs/project', this.projectId]);
   }
 }

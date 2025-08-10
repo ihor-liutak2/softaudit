@@ -84,15 +84,20 @@ export class ReqSpecsAddProjectComponent implements OnInit {
 
   async onSave(updated: ReqSpecsProject) {
     try {
-      await this.reqSpecsService.saveProject(updated);
+      const clean = { ...updated } as any;
+      if (!clean.id || !String(clean.id).trim()) {
+        delete clean.id; // <- дозволяємо сервісу згенерувати id
+      }
+
+      const id = await this.reqSpecsService.saveProject(clean as ReqSpecsProject);
       alert('Project saved successfully');
-      // Adjust the route if your list path differs
-      this.router.navigate(['/req-specs']);
+      this.router.navigate(['/req-specs/project', id]);
     } catch (e: any) {
       console.error('[ReqSpecsAddProjectComponent] save failed', e);
       alert('Failed to save project: ' + (e?.message ?? e));
     }
   }
+
 
   // Build a UserRef without undefined fields
   private toUserRef(u: AppUser): UserRef {
