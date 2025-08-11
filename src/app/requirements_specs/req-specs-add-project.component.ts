@@ -1,12 +1,13 @@
+// src/app/requirements_specs/req-specs-add-project.component.ts
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
+
 import { ReqSpecsService } from './req-specs.service';
 import { ReqSpecsProject, UserRef } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
 import { ReqSpecsProjectFormComponent } from './req-specs-project-form.component';
 import { UserService } from '../core/user/user.service';
-import { AppUser } from '../core/user/user.model';
 
 @Component({
   selector: 'app-req-specs-add-project',
@@ -16,95 +17,74 @@ import { AppUser } from '../core/user/user.model';
     <div class="container py-4">
       <h3 class="mb-3">Add / Edit Requirements Project</h3>
 
-      <ng-container *ngIf="project; else loading">
+      @if (project) {
         <app-req-specs-project-form
-          [project]="project"
+          [model]="project"
           [companies]="companies"
           [sectors]="sectors"
-          [currentUser]="currentUserRef"
+          [createdBy]="currentUserRef"
           (save)="onSave($event)">
         </app-req-specs-project-form>
-      </ng-container>
-
-      <ng-template #loading>
+      } @else {
         <div class="alert alert-info">Loading project form...</div>
-      </ng-template>
+      }
     </div>
   `
 })
 export class ReqSpecsAddProjectComponent implements OnInit {
-  private readonly reqSpecsService = inject(ReqSpecsService);
+  private readonly reqSpecs = inject(ReqSpecsService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
 
-  project!: ReqSpecsProject;
+  project: ReqSpecsProject | undefined;
   companies: Company[] = [];
   sectors: Sector[] = [];
-  currentUserRef?: UserRef;
+  currentUserRef: UserRef | undefined;
 
   async ngOnInit(): Promise<void> {
     // Map current auth user -> UserRef (uid/name/email)
     const u = this.userService.user;
-    this.currentUserRef = u ? this.toUserRef(u) : undefined;
+    this.currentUserRef = u
+      ? { uid: u.uid, name: u.displayName ?? undefined, email: u.email ?? undefined }
+      : undefined;
 
-    // Preload selects
-    await this.reqSpecsService.loadCompanies();
-    this.companies = this.reqSpecsService.companies();
-    this.sectors = this.reqSpecsService.sectors();
+    // Load reference data
+    await this.reqSpecs.loadCompanies();
+    this.companies = this.reqSpecs.companies();
+    this.sectors = this.reqSpecs.sectors();
 
-    // Edit mode: try load existing
-    const id = this.route.snapshot.paramMap.get('id') ?? '';
+    const id = this.route.snapshot.paramMap.get('id');
+
     if (id) {
-      const existing = await this.reqSpecsService.getProjectById(id);
+      const existing = await this.reqSpecs.getProjectById(id);
       if (existing) {
         this.project = existing;
         return;
       }
     }
 
-    // New draft project
-    const now = new Date().toISOString();
+    // New project default (no undefined fields for Firestore)
     this.project = {
       id: '',
       name: '',
-      description: undefined,
-      companyId: undefined,
-      sectorId: undefined,
+      description: '',
+      companyId: '',
+      sectorId: '',
       stakeholders: [],
       standards: undefined,
       tags: undefined,
       status: 'draft',
       deadlineAt: undefined,
-      createdBy: this.currentUserRef ?? { uid: 'unknown' },
-      createdAt: now,
-      updatedAt: now,
+      createdBy: this.currentUserRef ?? { uid: 'anonymous' },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
   }
 
   async onSave(updated: ReqSpecsProject) {
-    try {
-      const clean = { ...updated } as any;
-      if (!clean.id || !String(clean.id).trim()) {
-        delete clean.id; // <- дозволяємо сервісу згенерувати id
-      }
-
-      const id = await this.reqSpecsService.saveProject(clean as ReqSpecsProject);
-      alert('Project saved successfully');
-      this.router.navigate(['/req-specs/project', id]);
-    } catch (e: any) {
-      console.error('[ReqSpecsAddProjectComponent] save failed', e);
-      alert('Failed to save project: ' + (e?.message ?? e));
-    }
-  }
-
-
-  // Build a UserRef without undefined fields
-  private toUserRef(u: AppUser): UserRef {
-    return {
-      uid: u.uid,
-      ...(u.displayName ? { name: u.displayName } : {}),
-      ...(u.email ? { email: u.email } : {}),
-    };
+    await this.reqSpecs.saveProject(updated);
+    alert('Project saved successfully');
+    this.router.navigate(['/req-specs']);
   }
 }

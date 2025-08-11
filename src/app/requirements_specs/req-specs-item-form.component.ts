@@ -1,3 +1,4 @@
+// src/app/requirements_specs/req-specs-item-form.component.ts
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,12 +13,23 @@ import {
   ISODate,
 } from './req-specs.types';
 
+// src/app/requirements_specs/req-specs-item-form.component.ts
+// ...imports ті самі
+
 @Component({
   selector: 'app-req-specs-item-form',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <form (ngSubmit)="submit()" class="p-3 border rounded bg-light">
+
+      <!-- Optional parent info (read-only) -->
+      @if (parentId) {
+        <div class="mb-2">
+          <span class="small text-muted">Parent:</span>
+          <span class="badge bg-light text-dark ms-1">{{ parentLabel || parentId }}</span>
+        </div>
+      }
 
       <!-- Title -->
       <div class="mb-3">
@@ -36,19 +48,19 @@ import {
         <div class="col-md-4">
           <label class="form-label">Type</label>
           <select class="form-select" [(ngModel)]="item.type" name="type" required>
-            <option *ngFor="let t of requirementTypes" [value]="t">{{ t }}</option>
+            @for (t of requirementTypes; track t) { <option [value]="t">{{ t }}</option> }
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Priority</label>
           <select class="form-select" [(ngModel)]="item.priority" name="priority" required>
-            <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+            @for (p of priorities; track p) { <option [value]="p">{{ p }}</option> }
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">Status</label>
           <select class="form-select" [(ngModel)]="item.status" name="status" required>
-            <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+            @for (s of statuses; track s) { <option [value]="s">{{ s }}</option> }
           </select>
         </div>
       </div>
@@ -76,63 +88,61 @@ import {
         </div>
       </div>
 
-      <!-- Parent / Order -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label class="form-label">Parent ID (optional)</label>
-          <input class="form-control" [(ngModel)]="item.parentId" name="parentId" />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Order (optional)</label>
-          <input type="number" class="form-control" [(ngModel)]="item.order" name="order" />
-        </div>
+      <!-- Order (keep editable if you want manual ordering) -->
+      <div class="mb-3">
+        <label class="form-label">Order (optional)</label>
+        <input type="number" class="form-control" [(ngModel)]="item.order" name="order" />
       </div>
 
-      <!-- Standards (dynamic list) -->
+      <!-- Standards -->
       <div class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
           <label class="form-label mb-0">Standards</label>
           <button type="button" class="btn btn-sm btn-outline-primary" (click)="addStandard()">Add</button>
         </div>
-        <div *ngIf="standards.length === 0" class="form-text">No standards added.</div>
-        <div *ngFor="let s of standards; let i = index" class="border rounded p-2 mt-2">
-          <div class="row g-2">
-            <div class="col-md-4">
-              <input class="form-control" [(ngModel)]="s.code" name="std_code_{{i}}" placeholder="Code (e.g., ISO/IEC 29148:2018)" />
-            </div>
-            <div class="col-md-3">
-              <input class="form-control" [(ngModel)]="s.clause" name="std_clause_{{i}}" placeholder="Clause (e.g., 5.2.3)" />
-            </div>
-            <div class="col-md-4">
-              <input class="form-control" [(ngModel)]="s.note" name="std_note_{{i}}" placeholder="Note" />
-            </div>
-            <div class="col-md-1 d-grid">
-              <button type="button" class="btn btn-outline-danger" (click)="removeStandard(i)">&times;</button>
+        @if (standards.length === 0) { <div class="form-text">No standards added.</div> }
+        @for (s of standards; track $index; let i = $index) {
+          <div class="border rounded p-2 mt-2">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <input class="form-control" [(ngModel)]="s.code" [attr.name]="'std_code_' + i" placeholder="Code (e.g., ISO/IEC 29148:2018)" />
+              </div>
+              <div class="col-md-3">
+                <input class="form-control" [(ngModel)]="s.clause" [attr.name]="'std_clause_' + i" placeholder="Clause (e.g., 5.2.3)" />
+              </div>
+              <div class="col-md-4">
+                <input class="form-control" [(ngModel)]="s.note" [attr.name]="'std_note_' + i" placeholder="Note" />
+              </div>
+              <div class="col-md-1 d-grid">
+                <button type="button" class="btn btn-outline-danger" (click)="removeStandard(i)">&times;</button>
+              </div>
             </div>
           </div>
-        </div>
+        }
       </div>
 
-      <!-- Links (dynamic list) -->
+      <!-- Links -->
       <div class="mb-3">
         <div class="d-flex justify-content-between align-items-center">
           <label class="form-label mb-0">Links</label>
           <button type="button" class="btn btn-sm btn-outline-primary" (click)="addLink()">Add</button>
         </div>
-        <div *ngIf="links.length === 0" class="form-text">No links added.</div>
-        <div *ngFor="let l of links; let i = index" class="border rounded p-2 mt-2">
-          <div class="row g-2">
-            <div class="col-md-5">
-              <input class="form-control" [(ngModel)]="l.title" name="link_title_{{i}}" placeholder="Title" />
-            </div>
-            <div class="col-md-6">
-              <input class="form-control" [(ngModel)]="l.url" name="link_url_{{i}}" placeholder="URL" />
-            </div>
-            <div class="col-md-1 d-grid">
-              <button type="button" class="btn btn-outline-danger" (click)="removeLink(i)">&times;</button>
+        @if (links.length === 0) { <div class="form-text">No links added.</div> }
+        @for (l of links; track $index; let i = $index) {
+          <div class="border rounded p-2 mt-2">
+            <div class="row g-2">
+              <div class="col-md-5">
+                <input class="form-control" [(ngModel)]="l.title" [attr.name]="'link_title_' + i" placeholder="Title" />
+              </div>
+              <div class="col-md-6">
+                <input class="form-control" [(ngModel)]="l.url" [attr.name]="'link_url_' + i" placeholder="URL" />
+              </div>
+              <div class="col-md-1 d-grid">
+                <button type="button" class="btn btn-outline-danger" (click)="removeLink(i)">&times;</button>
+              </div>
             </div>
           </div>
-        </div>
+        }
       </div>
 
       <!-- Related / Tags -->
@@ -157,29 +167,25 @@ import {
 export class ReqSpecsItemFormComponent {
   @Input() model?: Partial<ReqSpecsItem>;
   @Input() projectId!: Id;
-  @Input() createdBy!: UserRef;        // user reference (uid/email/name)
-  @Input() parentId?: Id;
+  @Input() createdBy!: UserRef;
+  @Input() parentId?: Id;            // passed from context (query param / menu)
+  @Input() parentLabel?: string;     // optional pretty label for parent
 
   @Output() saved = new EventEmitter<ReqSpecsItem>();
 
-  // Select options that match your union types exactly
   requirementTypes: RequirementType[] = ['functional', 'nonfunctional', 'constraint', 'glossary'];
   priorities: Priority[] = ['must', 'should', 'could', 'wont'];
   statuses: Status[] = ['draft', 'in-review', 'approved', 'deprecated'];
 
-  // Internal editable buffers
   item!: ReqSpecsItem;
   standards: StandardRef[] = [];
   links: Array<{ title: string; url: string }> = [];
-
-  // Text buffers for multi-value fields
   acceptanceCriteriaText = '';
   relatedText = '';
   tagsText = '';
 
   ngOnInit() {
     this.item = this.mergeModel(this.model);
-    // Initialize dynamic lists
     this.standards = [...(this.model?.standards ?? [])];
     this.links = [...(this.model?.links ?? [])];
     this.acceptanceCriteriaText = (this.model?.acceptanceCriteria ?? []).join('\n');
@@ -187,41 +193,28 @@ export class ReqSpecsItemFormComponent {
     this.tagsText = (this.model?.tags ?? []).join(' ');
   }
 
-  // --- Helpers (model merge / text parsing) ----------------------------------
+  /** Returns ISO string for now */
+  private now(): ISODate { return new Date().toISOString(); }
 
-  /** Returns ISO string for "now" */
-  private now(): ISODate {
-    return new Date().toISOString();
-  }
-
-  /** Normalizes strings: trim and collapse whitespace */
+  /** Trim/collapse whitespace; return undefined if empty */
   private norm(s?: string): string | undefined {
     if (s == null) return undefined;
     const t = s.trim();
     return t.length ? t : undefined;
   }
 
-  /** Parses lines into an array (skips empty lines) */
   private parseLines(s?: string): string[] | undefined {
     if (!s) return undefined;
-    const arr = s
-      .split(/\r?\n/g)
-      .map(v => v.trim())
-      .filter(Boolean);
+    const arr = s.split(/\r?\n/g).map(v => v.trim()).filter(Boolean);
     return arr.length ? arr : undefined;
   }
 
-  /** Parses ids/tags separated by comma/space */
   private parseList(s?: string): string[] | undefined {
     if (!s) return undefined;
-    const arr = s
-      .split(/[\s,]+/g)
-      .map(v => v.trim())
-      .filter(Boolean);
+    const arr = s.split(/[\s,]+/g).map(v => v.trim()).filter(Boolean);
     return arr.length ? arr : undefined;
   }
 
-  /** Creates a clean ReqSpecsItem from inputs and optional model */
   private mergeModel(src?: Partial<ReqSpecsItem>): ReqSpecsItem {
     const createdAt: ISODate = src?.createdAt ?? this.now();
     const updatedAt: ISODate = src?.updatedAt ?? createdAt;
@@ -229,15 +222,15 @@ export class ReqSpecsItemFormComponent {
     return {
       id: src?.id ?? '',
       projectId: this.projectId,
-      type: (src?.type ?? 'functional') as RequirementType,
+      type: (src?.type ?? 'functional'),
       title: this.norm(src?.title) ?? '',
       description: this.norm(src?.description) ?? '',
       acceptanceCriteria: src?.acceptanceCriteria,
       rationale: this.norm(src?.rationale),
       source: this.norm(src?.source),
-      priority: (src?.priority ?? 'should') as Priority,
-      status: (src?.status ?? 'draft') as Status,
-      parentId: this.parentId ?? src?.parentId,
+      priority: (src?.priority ?? 'should'),
+      status: (src?.status ?? 'draft'),
+      parentId: this.parentId ?? src?.parentId, // set from outside; user does not edit
       order: src?.order,
       standards: src?.standards,
       links: src?.links,
@@ -246,36 +239,19 @@ export class ReqSpecsItemFormComponent {
       createdAt,
       updatedAt,
       tags: src?.tags,
-    };
+    } as ReqSpecsItem;
   }
 
-  // --- Dynamic lists: standards & links -------------------------------------
+  addStandard() { this.standards = [...this.standards, { code: '' }]; }
+  removeStandard(i: number) { this.standards = this.standards.filter((_, idx) => idx !== i); }
+  addLink() { this.links = [...this.links, { title: '', url: '' }]; }
+  removeLink(i: number) { this.links = this.links.filter((_, idx) => idx !== i); }
 
-  addStandard(): void {
-    this.standards = [...this.standards, { code: '' }];
-  }
-
-  removeStandard(index: number): void {
-    this.standards = this.standards.filter((_, i) => i !== index);
-  }
-
-  addLink(): void {
-    this.links = [...this.links, { title: '', url: '' }];
-  }
-
-  removeLink(index: number): void {
-    this.links = this.links.filter((_, i) => i !== index);
-  }
-
-  // --- Validation / reset / submit ------------------------------------------
-
-  /** Minimal synchronous validation */
   formValid(): boolean {
     return !!this.item.title && !!this.item.projectId && !!this.item.createdBy?.uid
       && !!this.item.type && !!this.item.priority && !!this.item.status;
   }
 
-  /** Reset back to original model (non-destructive) */
   resetToModel(): void {
     this.item = this.mergeModel(this.model);
     this.standards = [...(this.model?.standards ?? [])];
@@ -285,47 +261,44 @@ export class ReqSpecsItemFormComponent {
     this.tagsText = (this.model?.tags ?? []).join(' ');
   }
 
-  /** Emits sanitized payload */
   submit(): void {
-    // Trim/normalize free text fields
+    // Normalize
     this.item.title = this.item.title.trim();
     this.item.description = this.item.description?.trim() ?? '';
     this.item.rationale = this.norm(this.item.rationale);
     this.item.source = this.norm(this.item.source);
 
-    // Parse text buffers into arrays
-    const ac = this.parseLines(this.acceptanceCriteriaText);
+    // Text → arrays
+    const acceptanceCriteria = this.parseLines(this.acceptanceCriteriaText);
     const related = this.parseList(this.relatedText);
     const tags = this.parseList(this.tagsText);
 
-    // Clean standards (unchanged)
-    const stds = this.standards
+    // Standards clean
+    const standards = this.standards
       .map(s => ({ code: this.norm(s.code), clause: this.norm(s.clause), note: this.norm(s.note) }))
       .filter(s => !!s.code) as StandardRef[];
 
-    // Build links with required string fields
-    const lnks: Array<{ title: string; url: string }> = this.links
+    // Links clean with required fields only
+    const links = this.links
       .map(l => {
         const url = this.norm(l.url);
-        if (!url) return null; // skip invalid rows
-        const title = this.norm(l.title) ?? url; // fallback: use URL as title
+        if (!url) return null;
+        const title = this.norm(l.title) ?? url;
         return { title, url };
       })
       .filter((x): x is { title: string; url: string } => !!x);
 
-
-    // Let the service set final updatedAt; we still provide a fresh value
     const payload: ReqSpecsItem = {
       ...this.item,
-      acceptanceCriteria: ac,
+      acceptanceCriteria,
       related,
       tags,
-      standards: stds.length ? stds : undefined,
-      links: lnks.length ? lnks : undefined,
+      standards: standards.length ? standards : undefined,
+      links: links.length ? links : undefined,
       updatedAt: new Date().toISOString(),
     };
 
-    // Drop optional empty fields to keep docs tidy
+    // Strip empties
     if (!payload.parentId) delete (payload as any).parentId;
     if (!payload.order && payload.order !== 0) delete (payload as any).order;
     if (!payload.acceptanceCriteria?.length) delete (payload as any).acceptanceCriteria;

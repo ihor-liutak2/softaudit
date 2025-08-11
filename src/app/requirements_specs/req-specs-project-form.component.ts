@@ -1,317 +1,295 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+// src/app/requirements_specs/req-specs-project-form.component.ts
+import { Component, EventEmitter, Input, Output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  ReqSpecsProject,
-  Status,
-  StandardRef,
-  UserRef,
-  ISODate,
-} from './req-specs.types';
+
+import { ReqSpecsProject, UserRef } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
+
+type StakeholderRow = { name: string; role?: string; contact?: string };
+type Status = ReqSpecsProject['status'];
 
 @Component({
   selector: 'app-req-specs-project-form',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <form (ngSubmit)="onSubmit()" class="p-4 border rounded bg-light">
-      <!-- Name -->
-      <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input class="form-control" [(ngModel)]="vm.name" name="name" required />
-      </div>
+    <form (ngSubmit)="submit()" class="p-4 border rounded bg-light">
 
-      <!-- Description -->
-      <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea class="form-control" [(ngModel)]="vm.description" name="description" rows="3"></textarea>
-      </div>
-
-      <!-- Company / Sector -->
-      <div class="row g-3 mb-3">
+      <!-- Basic -->
+      <div class="row g-3">
         <div class="col-md-6">
+          <label class="form-label">Name *</label>
+          <input class="form-control" [(ngModel)]="name" name="name" required />
+        </div>
+
+        <div class="col-md-3">
           <label class="form-label">Company</label>
-          <select class="form-select" [(ngModel)]="vm.companyId" name="companyId">
-            <option [ngValue]="undefined">-- Select Company --</option>
-            <option *ngFor="let c of companies" [ngValue]="c.id">{{ c.name }}</option>
+          <select class="form-select" [(ngModel)]="companyId" name="companyId">
+            <option [ngValue]="''">—</option>
+            @for (c of companies; track c.id) {
+              <option [ngValue]="c.id">{{ c.name }}</option>
+            }
           </select>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-3">
           <label class="form-label">Sector</label>
-          <select class="form-select" [(ngModel)]="vm.sectorId" name="sectorId">
-            <option [ngValue]="undefined">-- Select Sector --</option>
-            <option *ngFor="let s of sectors" [ngValue]="s.id">{{ s.name }}</option>
+          <select class="form-select" [(ngModel)]="sectorId" name="sectorId">
+            <option [ngValue]="''">—</option>
+            @for (s of sectors; track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
           </select>
         </div>
       </div>
 
-      <!-- Deadline / Status -->
-      <div class="row g-3 mb-3">
-        <div class="col-md-6">
-          <label class="form-label">Deadline</label>
-          <input type="date" class="form-control" [(ngModel)]="deadlineLocal" name="deadlineLocal" />
-          <div class="form-text">Optional target date for SRS completion.</div>
+      <div class="mt-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" [(ngModel)]="description" name="description" rows="3"></textarea>
+      </div>
+
+      <!-- Status & deadline -->
+      <div class="row g-3 mt-1">
+        <div class="col-md-3">
+          <label class="form-label">Status *</label>
+          <select class="form-select" [(ngModel)]="status" name="status" required>
+            <option [ngValue]="'draft'">draft</option>
+            <option [ngValue]="'in-review'">in-review</option>
+            <option [ngValue]="'approved'">approved</option>
+            <option [ngValue]="'archived'">archived</option>
+          </select>
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Status</label>
-          <select class="form-select" [(ngModel)]="vm.status" name="status" required>
-            <option *ngFor="let s of statuses" [ngValue]="s">{{ s }}</option>
-          </select>
+        <div class="col-md-3">
+          <label class="form-label">Deadline</label>
+          <input type="date" class="form-control" [(ngModel)]="deadlineAt" name="deadlineAt" />
         </div>
       </div>
 
       <!-- Stakeholders -->
-      <div class="mb-3">
+      <div class="mt-4">
         <div class="d-flex justify-content-between align-items-center">
           <label class="form-label mb-0">Stakeholders</label>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addStakeholder()">Add</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" (click)="addStakeholder()">
+            <i class="bi bi-plus-lg"></i> Add
+          </button>
         </div>
-        <div *ngIf="vm.stakeholders?.length === 0 || !vm.stakeholders" class="form-text">No stakeholders added.</div>
 
-        <div *ngFor="let st of vm.stakeholders; let i = index" class="border rounded p-2 mt-2">
-          <div class="row g-2">
-            <div class="col-md-4">
-              <input class="form-control" [(ngModel)]="st.name" name="st_name_{{i}}" placeholder="Name" />
-            </div>
-            <div class="col-md-4">
-              <input class="form-control" [(ngModel)]="st.role" name="st_role_{{i}}" placeholder="Role" />
-            </div>
-            <div class="col-md-3">
-              <input class="form-control" [(ngModel)]="st.contact" name="st_contact_{{i}}" placeholder="Contact" />
-            </div>
-            <div class="col-md-1 d-grid">
-              <button type="button" class="btn btn-outline-danger" (click)="removeStakeholder(i)">&times;</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Standards -->
-      <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <label class="form-label mb-0">Standards</label>
-          <button type="button" class="btn btn-sm btn-outline-primary" (click)="addStandard()">Add</button>
-        </div>
-        <div *ngIf="standards.length === 0" class="form-text">No standards added.</div>
-
-        <div *ngFor="let s of standards; let i = index" class="border rounded p-2 mt-2">
-          <div class="row g-2">
-            <div class="col-md-5">
-              <input class="form-control" [(ngModel)]="s.code" name="std_code_{{i}}" placeholder="Code (e.g., ISO/IEC/IEEE 29148:2018)" />
-            </div>
-            <div class="col-md-3">
-              <input class="form-control" [(ngModel)]="s.clause" name="std_clause_{{i}}" placeholder="Clause (e.g., 5.2.3)" />
-            </div>
-            <div class="col-md-3">
-              <input class="form-control" [(ngModel)]="s.note" name="std_note_{{i}}" placeholder="Note" />
-            </div>
-            <div class="col-md-1 d-grid">
-              <button type="button" class="btn btn-outline-danger" (click)="removeStandard(i)">&times;</button>
-            </div>
-          </div>
+        <div class="table-responsive mt-2">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 40%">Name</th>
+                <th style="width: 30%">Role</th>
+                <th style="width: 25%">Contact</th>
+                <th style="width: 5%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of stakeholders(); track $index) {
+                <tr>
+                  <td><input class="form-control" [(ngModel)]="row.name" name="sh_name_{{ $index }}" /></td>
+                  <td><input class="form-control" [(ngModel)]="row.role" name="sh_role_{{ $index }}" /></td>
+                  <td><input class="form-control" [(ngModel)]="row.contact" name="sh_contact_{{ $index }}" /></td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeStakeholder($index)">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr><td colspan="4" class="text-muted text-center">No stakeholders</td></tr>
+              }
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- Tags -->
-      <div class="mb-3">
-        <label class="form-label">Tags (comma/space separated)</label>
-        <input class="form-control" [(ngModel)]="tagsText" name="tagsText" placeholder="quality security performance ..." />
+      <div class="mt-3">
+        <label class="form-label">Tags</label>
+        <div class="d-flex gap-2">
+          <input class="form-control" [(ngModel)]="tagInput" name="tagInput" (keydown.enter)="addTag(); $event.preventDefault();" placeholder="Type tag and press Enter" />
+          <button type="button" class="btn btn-outline-secondary" (click)="addTag()">Add</button>
+        </div>
+
+        <div class="mt-2">
+          @for (t of tags(); track t) {
+            <span class="badge text-bg-secondary me-2">
+              {{ t }}
+              <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeTag(t)"></button>
+            </span>
+          }
+          @empty {
+            <span class="text-muted">No tags</span>
+          }
+        </div>
       </div>
 
-      <div class="text-end">
-        <button class="btn btn-outline-secondary me-2" type="button" (click)="resetToModel()">Reset</button>
-        <button class="btn btn-primary" type="submit" [disabled]="!formValid()">Save</button>
+      <!-- System info -->
+      <div class="mt-4 small text-muted">
+        <div>Created by: {{ createdByLabel() }}</div>
+        <div>Created: {{ createdAt || '—' }}</div>
+        <div>Updated: {{ updatedAt || '—' }}</div>
+      </div>
+
+      <div class="text-end mt-4">
+        <button class="btn btn-primary" type="submit" [disabled]="!isValid()">Save</button>
       </div>
     </form>
   `
 })
 export class ReqSpecsProjectFormComponent {
-  @Input() project?: Partial<ReqSpecsProject>;  // incoming model (edit mode)
+  // Inputs
+  @Input() model?: Partial<ReqSpecsProject>;
   @Input() companies: Company[] = [];
   @Input() sectors: Sector[] = [];
-  @Input() currentUser?: UserRef;               // used for createdBy if missing
+  @Input() createdBy?: UserRef; // parent should pass current user
 
+  // Outputs
   @Output() save = new EventEmitter<ReqSpecsProject>();
 
-  // Internal VM bound to the template; kept partial for flexibility
-  vm: Partial<ReqSpecsProject> = {};
+  // Local state (form controls)
+  id = '';
+  name = '';
+  description = '';
+  companyId: string = '';
+  sectorId: string = '';
+  status: Status = 'draft';
+  deadlineAt: string = ''; // ISO date (yyyy-mm-dd) for <input type="date">
 
-  // Dynamic lists
-  standards: StandardRef[] = [];
+  createdAt = '';
+  updatedAt = '';
 
-  // Select options
-  statuses: Status[] = ['draft', 'in-review', 'approved', 'deprecated'];
+  stakeholders = signal<StakeholderRow[]>([]);
+  tagInput = '';
+  tags = signal<string[]>([]);
 
-  // Text buffers
-  tagsText = '';
-  deadlineLocal = ''; // yyyy-mm-dd for <input type="date">
-
+  // Initialize from model
   ngOnInit() {
-    this.vm = this.mergeModel(this.project);
-    this.standards = [...(this.project?.standards ?? [])];
+    const m = this.model ?? {};
 
-    // Tags as text
-    this.tagsText = (this.project?.tags ?? []).join(' ');
+    this.id = m.id ?? '';
+    this.name = m.name ?? '';
+    this.description = m.description ?? '';
+    this.companyId = m.companyId ?? '';
+    this.sectorId = m.sectorId ?? '';
+    this.status = (m.status as Status) ?? 'draft';
+    this.deadlineAt = m.deadlineAt ? this.toDateInput(m.deadlineAt) : '';
 
-    // Convert ISO deadlineAt to yyyy-mm-dd local string
-    if (this.project?.deadlineAt) {
-      try {
-        const d = new Date(this.project.deadlineAt);
-        if (!isNaN(d.getTime())) {
-          this.deadlineLocal = d.toISOString().slice(0, 10);
-        }
-      } catch { /* noop */ }
-    }
+    this.createdAt = m.createdAt ?? new Date().toISOString();
+    this.updatedAt = m.updatedAt ?? new Date().toISOString();
+
+    this.stakeholders.set(
+      (m.stakeholders?.map(s => ({ name: s.name ?? '', role: s.role, contact: s.contact })) ?? [])
+    );
+
+    this.tags.set([...(m.tags ?? [])]);
   }
 
-  // --- Helpers ---------------------------------------------------------------
-
-  /** Returns ISO string of now */
-  private now(): ISODate {
-    return new Date().toISOString();
+  // Basic validation (required: name, status)
+  isValid(): boolean {
+    return !!this.name && !!this.status;
   }
 
-  /** Normalizes string: trim & collapse whitespace */
-  private norm(s?: string): string | undefined {
-    if (s == null) return undefined;
-    const t = s.trim();
-    return t.length ? t : undefined;
-  }
+  // Submit → emit normalized ReqSpecsProject
+  submit() {
+    if (!this.isValid()) return;
 
-  /** Parses ids/tags separated by comma/space */
-  private parseList(s?: string): string[] | undefined {
-    if (!s) return undefined;
-    const arr = s.split(/[\s,]+/g).map(v => v.trim()).filter(Boolean);
-    return arr.length ? arr : undefined;
-  }
+    const nowIso = new Date().toISOString();
+    const uid = this.id || crypto.randomUUID();
 
-  /** Creates a clean partial VM from incoming model */
-  private mergeModel(src?: Partial<ReqSpecsProject>): Partial<ReqSpecsProject> {
-    return {
-      id: src?.id ?? '',
-      name: this.norm(src?.name) ?? '',
-      description: this.norm(src?.description),
-      companyId: src?.companyId,
-      sectorId: src?.sectorId,
-      status: (src?.status ?? 'draft') as Status,
-      stakeholders: src?.stakeholders ?? [],
-      // standards handled via dedicated array
-      // tags handled via text buffer
-      deadlineAt: src?.deadlineAt,
-      createdBy: src?.createdBy ?? this.currentUser,
-      createdAt: src?.createdAt,
-      updatedAt: src?.updatedAt,
-    };
-  }
-
-  // --- Dynamic lists: stakeholders & standards -------------------------------
-
-  addStakeholder(): void {
-    const list = this.vm.stakeholders ?? [];
-    this.vm.stakeholders = [...list, { name: '', role: '', contact: '' }];
-  }
-
-  removeStakeholder(i: number): void {
-    if (!this.vm.stakeholders) return;
-    this.vm.stakeholders = this.vm.stakeholders.filter((_, idx) => idx !== i);
-  }
-
-  addStandard(): void {
-    this.standards = [...this.standards, { code: '' }];
-  }
-
-  removeStandard(i: number): void {
-    this.standards = this.standards.filter((_, idx) => idx !== i);
-  }
-
-  // --- Validation / reset / submit ------------------------------------------
-
-  /** Minimal synchronous validation */
-  formValid(): boolean {
-    return !!this.vm.name && !!this.vm.status;
-  }
-
-  /** Reset form back to original model */
-  resetToModel(): void {
-    this.vm = this.mergeModel(this.project);
-    this.standards = [...(this.project?.standards ?? [])];
-    this.tagsText = (this.project?.tags ?? []).join(' ');
-    this.deadlineLocal = '';
-    if (this.project?.deadlineAt) {
-      try {
-        const d = new Date(this.project.deadlineAt);
-        if (!isNaN(d.getTime())) this.deadlineLocal = d.toISOString().slice(0, 10);
-      } catch { /* noop */ }
-    }
-  }
-
-  /** Emit sanitized payload */
-  onSubmit(): void {
-    // Normalize text fields
-    const name = this.norm(this.vm.name) ?? '';
-    const description = this.norm(this.vm.description);
-
-    // Clean stakeholders (drop empty rows)
-    const stakeholders = (this.vm.stakeholders ?? [])
-      .map(st => ({
-        name: this.norm(st.name),
-        role: this.norm(st.role),
-        contact: this.norm(st.contact),
+    // Compact stakeholders: remove empty rows
+    const sh = this.stakeholders()
+      .map(r => ({
+        name: r.name?.trim(),
+        role: r.role?.trim() || undefined,
+        contact: r.contact?.trim() || undefined
       }))
-      .filter(st => !!st.name);
+      .filter(r => !!r.name) as StakeholderRow[];
 
-    // Clean standards (drop empty rows)
-    const stds = this.standards
-      .map(s => ({
-        code: this.norm(s.code),
-        clause: this.norm(s.clause),
-        note: this.norm(s.note),
-      }))
-      .filter(s => !!s.code) as StandardRef[];
-
-    // Parse tags
-    const tags = this.parseList(this.tagsText);
-
-    // Convert date to ISO
-    let deadlineAt: ISODate | undefined = undefined;
-    if (this.deadlineLocal) {
-      try {
-        // Store as start-of-day UTC to keep a stable ISO value
-        deadlineAt = new Date(this.deadlineLocal + 'T00:00:00.000Z').toISOString();
-      } catch { /* noop */ }
-    }
-
-    const now = this.now();
-    const createdAt = this.project?.createdAt ?? now;
-
-    const payload: ReqSpecsProject = {
-      id: this.project?.id ?? '',                    // service will generate if empty
-      name,
-      description,
-      companyId: this.vm.companyId || undefined,
-      sectorId: this.vm.sectorId || undefined,
-      stakeholders: stakeholders.length ? stakeholders as any : undefined,
-      standards: stds.length ? stds : undefined,
-      tags: tags?.length ? tags : undefined,
-      status: (this.vm.status as Status) ?? 'draft',
-      deadlineAt,
-      createdBy: this.project?.createdBy ?? this.currentUser ?? { uid: 'unknown' },
-      createdAt,
-      updatedAt: now,
-    };
-
-    // Drop undefined optionals to keep document tidy
-    if (!payload.description) delete (payload as any).description;
-    if (!payload.companyId) delete (payload as any).companyId;
-    if (!payload.sectorId) delete (payload as any).sectorId;
-    if (!payload.stakeholders?.length) delete (payload as any).stakeholders;
-    if (!payload.standards?.length) delete (payload as any).standards;
-    if (!payload.tags?.length) delete (payload as any).tags;
-    if (!payload.deadlineAt) delete (payload as any).deadlineAt;
+    // Build clean payload without undefined (Firestore-safe)
+    const payload: ReqSpecsProject = this.compact<ReqSpecsProject>({
+      id: uid,
+      name: this.name.trim(),
+      description: this.description?.trim() || undefined,
+      companyId: this.companyId || undefined,
+      sectorId: this.sectorId || undefined,
+      stakeholders: sh.length ? sh : undefined,
+      // standards are not edited in this form for now; leave as-is from model if present
+      standards: (this.model?.standards && this.model!.standards!.length) ? this.model!.standards : undefined,
+      tags: this.tags().length ? this.tags() : undefined,
+      status: this.status,
+      deadlineAt: this.deadlineAt ? this.fromDateInput(this.deadlineAt) : undefined,
+      createdBy: this.model?.createdBy ?? this.createdBy!, // parent should pass createdBy
+      createdAt: this.model?.createdAt ?? this.createdAt ?? nowIso,
+      updatedAt: nowIso
+    });
 
     this.save.emit(payload);
+  }
+
+  /** Add/remove stakeholders */
+  addStakeholder() {
+    this.stakeholders.update(list => [...list, { name: '', role: '', contact: '' }]);
+  }
+  removeStakeholder(i: number) {
+    this.stakeholders.update(list => list.filter((_, idx) => idx !== i));
+  }
+
+  /** Add/remove tags */
+  addTag() {
+    const t = (this.tagInput || '').trim();
+    if (!t) return;
+    if (!this.tags().includes(t)) this.tags.update(arr => [...arr, t]);
+    this.tagInput = '';
+  }
+  removeTag(tag: string) {
+    this.tags.update(arr => arr.filter(x => x !== tag));
+  }
+
+  /** Render createdBy label */
+  createdByLabel(): string {
+    const u = this.model?.createdBy ?? this.createdBy;
+    if (!u) return '—';
+    return (u as any).name ?? (u as any).email ?? (u as any).uid ?? '—';
+  }
+
+  /** Utilities */
+
+  // Remove undefined, empty string and empty arrays from object
+  private compact<T extends Record<string, any>>(obj: T): T {
+    const out: any = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === undefined || v === null) continue;
+      if (typeof v === 'string' && v.trim() === '') continue;
+      if (Array.isArray(v) && v.length === 0) continue;
+      out[k] = v;
+    }
+    return out as T;
+  }
+
+  // Convert ISO date string → input[type=date] value (yyyy-mm-dd)
+  private toDateInput(iso: string): string {
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    } catch {
+      return '';
+    }
+  }
+
+  // Convert input[type=date] value → ISO (yyyy-mm-dd -> yyyy-mm-ddT00:00:00.000Z)
+  private fromDateInput(val: string): string {
+    if (!val) return '';
+    // Interpret as UTC midnight to be stable
+    return new Date(`${val}T00:00:00.000Z`).toISOString();
+    // If you prefer local date start, use new Date(val).toISOString()
   }
 }

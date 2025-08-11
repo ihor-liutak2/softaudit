@@ -1,10 +1,11 @@
+// src/app/requirements_specs/req-specs-item-edit.component.ts
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Firestore, doc, getDoc, setDoc } from '@angular/fire/firestore';
 
-import { ReqSpecsItem, UserRef, ISODate } from './req-specs.types';
+import { ReqSpecsItem, UserRef } from './req-specs.types';
 import { ReqSpecsItemFormComponent } from './req-specs-item-form.component';
 import { UserService } from '../core/user/user.service';
 import { COLL_REQSPECS } from './req-specs.collections';
@@ -16,20 +17,28 @@ import { omitUndefinedDeep } from './req-specs-utils.function';
   imports: [CommonModule, FormsModule, ReqSpecsItemFormComponent],
   template: `
     <div class="container py-4">
-      <h4 class="mb-4">{{ isEdit ? 'Edit Requirement' : 'New Requirement' }}</h4>
+      <h4 class="mb-2">{{ isEdit ? 'Edit Requirement' : 'New Requirement' }}</h4>
 
-      <ng-container *ngIf="ready; else loading">
+      @if (!isEdit && parentIdFromQuery) {
+        <div class="mb-3 small text-muted">
+          Child of: <span class="badge bg-light text-dark">
+            {{ parentLabel || parentIdFromQuery }}
+          </span>
+        </div>
+      }
+
+      @if (ready) {
         <app-req-specs-item-form
           [projectId]="projectId"
           [createdBy]="currentUserRef || { uid: 'unknown' }"
+          [parentId]="!isEdit ? parentIdFromQuery : undefined"
+          [parentLabel]="!isEdit ? parentLabel : undefined"
           [model]="existingItem"
           (saved)="save($event)">
         </app-req-specs-item-form>
-      </ng-container>
-
-      <ng-template #loading>
+      } @else {
         <div class="alert alert-info">Loading requirement...</div>
-      </ng-template>
+      }
     </div>
   `
 })
@@ -45,6 +54,10 @@ export class ReqSpecsItemEditComponent implements OnInit {
   itemId: string | null = null;
   isEdit = false;
 
+  // Sub-item state (from query param ?parent=...)
+  parentIdFromQuery?: string;
+  parentLabel?: string;
+
   // UI state
   ready = false;
   existingItem?: Partial<ReqSpecsItem>;
@@ -56,6 +69,18 @@ export class ReqSpecsItemEditComponent implements OnInit {
     this.itemId = this.route.snapshot.paramMap.get('itemId');
     this.isEdit = !!this.itemId;
 
+    // Resolve sub-item parent from query param if creating new
+    if (!this.isEdit) {
+      this.parentIdFromQuery = this.route.snapshot.queryParamMap.get('parent') ?? undefined;
+      if (this.parentIdFromQuery) {
+        // Load parent to show a friendly label (title)
+        const parentRef = doc(this.firestore, `${COLL_REQSPECS}/${this.parentIdFromQuery}`);
+        const parentSnap = await getDoc(parentRef);
+        const parent = parentSnap.exists() ? (parentSnap.data() as ReqSpecsItem) : undefined;
+        this.parentLabel = parent?.title;
+      }
+    }
+
     // Build UserRef from current user (no undefined fields)
     const u = this.userService.user;
     this.currentUserRef = u ? this.toUserRef(u) : undefined;
@@ -64,9 +89,7 @@ export class ReqSpecsItemEditComponent implements OnInit {
     if (this.isEdit && this.itemId) {
       const ref = doc(this.firestore, `${COLL_REQSPECS}/${this.itemId}`);
       const snap = await getDoc(ref);
-      if (snap.exists()) {
-        this.existingItem = snap.data() as ReqSpecsItem;
-      }
+      if (snap.exists()) this.existingItem = snap.data() as ReqSpecsItem;
     }
 
     this.ready = true;
@@ -81,70 +104,71 @@ export class ReqSpecsItemEditComponent implements OnInit {
     };
   }
 
-  /** Save (create or update) the requirement */
+  /** Save (create or update) the requirement - overwrite whole doc */
   async save(item: ReqSpecsItem) {
     const id = this.itemId ?? crypto.randomUUID();
     const ref = doc(this.firestore, `${COLL_REQSPECS}/${id}`);
 
-    // Build acceptance criteria safely (empty -> undefined)
-    const ac = (item.acceptanceCriteria ?? [])
+    // Prefer parentId from query when creating; keep explicit value on edit
+    const parentId = this.isEdit
+      ? (item.parentId?.trim() || undefined)
+      : (this.parentIdFromQuery ?? (item.parentId?.trim() || undefined));
+
+    // Normalize arrays
+    const acceptanceCriteria = (item.acceptanceCriteria ?? [])
       .map(s => (s ?? '').trim())
       .filter(Boolean);
-    const acceptanceCriteria = ac.length ? ac : undefined;
-
-    // Build standards safely (empty -> undefined)
-    const stds = (item.standards ?? [])
+    const standards = (item.standards ?? [])
       .map(s => ({
         code: (s.code ?? '').trim(),
         clause: (s.clause ?? '').trim() || undefined,
         note: (s.note ?? '').trim() || undefined,
       }))
       .filter(s => !!s.code);
-    const standards = stds.length ? stds : undefined;
-
-    // Build links safely (title must be string, url required)
     type Link = { title: string; url: string };
-    const lnks = (item.links ?? [])
+    const links = (item.links ?? [])
       .map(l => {
         const url = (l?.url ?? '').trim();
-        const title = (l?.title ?? '').trim(); // <- always string
+        const title = (l?.title ?? '').trim();
         if (!url) return null;
-        return { title, url } as Link;
+        return { title: title || url, url } as Link;
       })
       .filter((v): v is Link => v !== null);
-    const links: Link[] | undefined = lnks.length ? lnks : undefined;
-
-    // Related and tags (empty -> undefined)
-    const related = (item.related ?? []).filter(Boolean);
+    const related = (item.related ?? []).map(x => `${x}`.trim()).filter(Boolean);
     const tags = (item.tags ?? []).map(t => t.trim()).filter(Boolean);
 
-    // Now payload matches the type exactly
+    // Keep original createdAt/createdBy on edit (since we overwrite the doc)
+    const createdAt = this.existingItem?.createdAt || item.createdAt || new Date().toISOString();
+    const createdBy =
+      this.existingItem?.createdBy ||
+      item.createdBy ||
+      this.currentUserRef || { uid: 'unknown' };
+
+    // Build full payload (no undefined allowed for Firestore)
     const payload: ReqSpecsItem = {
       ...item,
       id,
       projectId: this.projectId,
-      acceptanceCriteria,
-      standards,
-      links,                                  // <- type-safe now
+      parentId, // may be undefined -> will be omitted below
+      acceptanceCriteria: acceptanceCriteria.length ? acceptanceCriteria : undefined,
+      standards: standards.length ? standards : undefined,
+      links: links.length ? links : undefined,
       related: related.length ? related : undefined,
       tags: tags.length ? tags : undefined,
-      parentId: item.parentId?.trim() || undefined,
-      order: item.order ?? undefined,
       rationale: item.rationale?.trim() || undefined,
       source: item.source?.trim() || undefined,
+      order: item.order ?? undefined,
+      createdAt,
+      createdBy,
       updatedAt: new Date().toISOString(),
-      createdAt: item.createdAt || new Date().toISOString(),
-      createdBy: item.createdBy || {
-        uid: this.userService.user?.uid ?? 'unknown',
-        name: this.userService.user?.displayName ?? undefined,
-        email: this.userService.user?.email ?? undefined,
-      },
     };
 
-    // 🔑 Firestore-safe: remove every `undefined`
+    // Strip every `undefined` before sending to Firestore
     const clean = omitUndefinedDeep(payload);
 
-    await setDoc(ref, clean, { merge: true });
+    // Overwrite entire document (deletes fields you omitted)
+    await setDoc(ref, clean, { merge: false });
+
     this.router.navigate(['/req-specs/project', this.projectId]);
   }
 }

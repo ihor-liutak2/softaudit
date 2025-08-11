@@ -107,9 +107,14 @@ import { Company, Sector } from '../core/general/general.types';
               <!-- Add Item (у вас вже є потрібний маршрут) -->
               <a
                 [routerLink]="['/req-specs/project', project.id, 'item']"
-                class="btn btn-sm btn-outline-success">
+                class="btn btn-sm btn-outline-success me-2">
                 <i class="bi bi-plus-lg"></i> Add Item
               </a>
+
+              <a [routerLink]="['/req-specs/srs', project.id]" class="btn btn-sm btn-outline-success me-2">
+                <i class="bi bi-file-earmark-text"></i> SRS
+              </a>
+
             </td>
           </tr>
         }

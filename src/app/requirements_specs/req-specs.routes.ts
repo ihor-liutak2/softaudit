@@ -9,6 +9,7 @@ import { ReqSpecsProjectDetailComponent } from './req-specs-project-detail.compo
 import { UserService } from '../core/user/user.service';
 import { ReqSpecsViewComponent } from './req-specs-view.component';
 import { ReqSpecsItemEditComponent } from './req-specs-item-edit.component';
+import { ReqSpecsSrsComponent } from './req-specs-srs.component';
 
 // Guard for authenticated users
 function authGuard() {
@@ -61,7 +62,9 @@ export const reqSpecsRoutes: Routes = [
         path: 'project/:projectId/item/:itemId',
         component: ReqSpecsItemEditComponent,
         title: 'Edit Requirement'
-      }
+      },
+       // SRS view for a project
+      { path: 'srs/:id', component: ReqSpecsSrsComponent, title: 'SRS Draft' },
     ]
   }
 ];

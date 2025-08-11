@@ -11,6 +11,7 @@ export interface UserRef {
   uid: Id;
   email?: string;
   displayName?: string;
+  name?: string;
 }
 
 export interface StandardRef {
@@ -28,21 +29,60 @@ export interface ReqSpecsProject {
   id: Id;
   name: string;
 
+  // Identification / context
   companyId?: Id;
   sectorId?: Id;
-  description?: string;
+  description?: string;         // High-level project description
 
-  stakeholders?: Array<{ name: string; role?: string; contact?: string }>;
-  standards?: StandardRef[];         // Project-level standards
-  tags?: string[];                   // For filtering/search
+  // SRS overview sections
+  scope?: string;               // What is in (and out) of scope
+  domainContext?: string;       // Domain background, business context
+  objectives?: string[];        // Project goals
+  nonGoals?: string[];          // Explicitly out of scope
+  assumptions?: string[];       // Assumptions made when writing SRS
+  constraints?: string[];       // Global constraints (tech, legal, etc.)
+  glossary?: Array<{           // Optional glossary for terms
+    term: string;
+    definition: string;
+  }>;
 
-  status: Status;                    // draft/in-review/approved/...
-  deadlineAt?: ISODate;
+  // Stakeholders
+  stakeholders?: Array<{
+    name: string;
+    role?: string;
+    contact?: string;           // email/phone/etc.
+  }>;
 
+  // References / artifacts
+  links?: Array<{              // Project-level documents or URLs
+    title: string;
+    url: string;
+  }>;
+
+  // Standards and tagging
+  standards?: StandardRef[];    // Project-level standards mapping
+  tags?: string[];              // For filtering/search
+
+  // Status & timeline
+  status: Status;               // draft/in-review/approved/...
+  deadlineAt?: ISODate;         // Optional single deadline
+  // (Optional) plannedStartAt/plannedEndAt can be added later if needed
+
+  // SRS meta
+  srsVersion?: string;          // E.g. "0.1-draft"
+  revisionHistory?: Array<{     // Change log for SRS document
+    version: string;
+    date: ISODate;
+    author: UserRef;
+    notes?: string;
+  }>;
+
+  // Audit fields
   createdBy: UserRef;
   createdAt: ISODate;
   updatedAt: ISODate;
 }
+
 
 // --- Requirement item --------------------------------------------------------
 
