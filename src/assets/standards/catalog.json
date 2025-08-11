@@ -1,0 +1,362 @@
+{
+  "version": 1,
+  "standards": [
+    {
+      "id": "iso-25010",
+      "code": "ISO/IEC 25010",
+      "title": "System and software quality models",
+      "edition": "2011",
+      "url": "https://iso.org/standard/35733.html",
+      "tags": ["quality-model", "product-quality"],
+      "clauses": [
+        {
+          "id": "25010-pe-time",
+          "code": "PE.TimeBehavior",
+          "title": "Time behavior",
+          "summary": "System meets response time and processing time targets under stated conditions.",
+          "keywords": ["latency", "response time", "throughput", "SLA"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.performance" },
+            { "type": "qualityRule", "value": "measurable" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        },
+        {
+          "id": "25010-pe-resource",
+          "code": "PE.ResourceUtilization",
+          "title": "Resource utilization",
+          "summary": "System uses CPU, memory, storage, and network within specified bounds.",
+          "keywords": ["CPU", "memory", "bandwidth", "footprint"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.performance" },
+            { "type": "qualityRule", "value": "measurable" }
+          ]
+        },
+        {
+          "id": "25010-pe-capacity",
+          "code": "PE.Capacity",
+          "title": "Capacity",
+          "summary": "System sustains a defined number of users/transactions/data volume.",
+          "keywords": ["scalability", "load", "TPS", "users"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.performance" },
+            { "type": "qualityRule", "value": "measurable" }
+          ]
+        },
+        {
+          "id": "25010-sec-conf",
+          "code": "SEC.Confidentiality",
+          "title": "Confidentiality",
+          "summary": "Data is accessible only to authorized parties.",
+          "keywords": ["access control", "encryption", "least privilege"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "qualityRule", "value": "testable" }
+          ]
+        },
+        {
+          "id": "25010-sec-integ",
+          "code": "SEC.Integrity",
+          "title": "Integrity",
+          "summary": "Information is protected from unauthorized modification.",
+          "keywords": ["checksums", "signatures", "tamper-evident"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        },
+        {
+          "id": "25010-sec-authn",
+          "code": "SEC.Authenticity",
+          "title": "Authenticity",
+          "summary": "Identity of users and components can be reliably verified.",
+          "keywords": ["authentication", "MFA", "federation"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" }
+          ]
+        },
+        {
+          "id": "25010-sec-account",
+          "code": "SEC.Accountability",
+          "title": "Accountability",
+          "summary": "Actions can be traced to a uniquely identifiable actor.",
+          "keywords": ["audit trail", "logging", "non-repudiation"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "qualityRule", "value": "traceable" }
+          ]
+        },
+        {
+          "id": "25010-rel-availability",
+          "code": "REL.Availability",
+          "title": "Availability",
+          "summary": "System is operational and accessible when required.",
+          "keywords": ["uptime", "SLO", "redundancy", "failover"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.reliability" },
+            { "type": "qualityRule", "value": "measurable" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-29148",
+      "code": "ISO/IEC/IEEE 29148",
+      "title": "Requirements engineering",
+      "edition": "2018",
+      "url": "https://iso.org/standard/72089.html",
+      "tags": ["requirements", "engineering"],
+      "clauses": [
+        {
+          "id": "29148-req-attributes",
+          "code": "5.2",
+          "title": "Requirement attributes",
+          "summary": "Each requirement includes rationale, source, priority, and verification method.",
+          "keywords": ["rationale", "source", "priority", "V&V"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "functionalRequirements" },
+            { "type": "qualityRule", "value": "complete" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        },
+        {
+          "id": "29148-traceability",
+          "code": "5.4",
+          "title": "Traceability",
+          "summary": "Bidirectional links between requirements, design, tests, and sources.",
+          "keywords": ["traceability", "coverage", "impact analysis"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "traceable" }
+          ]
+        },
+        {
+          "id": "29148-verification",
+          "code": "6.4",
+          "title": "Verification & validation",
+          "summary": "Define verification method (test/analysis/inspection/demo) and acceptance criteria.",
+          "keywords": ["verification", "validation", "acceptance"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "functionalRequirements" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-9001",
+      "code": "ISO 9001:2015",
+      "title": "Quality management systems — Requirements",
+      "edition": "2015",
+      "url": "https://www.iso.org/standard/62085.html",
+      "tags": ["qms", "process", "quality"],
+      "clauses": [
+        {
+          "id": "iso-9001:6.1",
+          "code": "6.1",
+          "title": "Actions to address risks and opportunities",
+          "summary": "Identify risks/opportunities, plan actions, integrate into processes, evaluate effectiveness.",
+          "keywords": ["risk", "opportunity", "planning"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "traceable" },
+            { "type": "evidence", "value": "analysis" }
+          ]
+        },
+        {
+          "id": "iso-9001:7.2",
+          "code": "7.2",
+          "title": "Competence",
+          "summary": "Determine required competence, ensure it, and retain evidence (training/records).",
+          "keywords": ["competence", "skills", "training", "records"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:7.5",
+          "code": "7.5",
+          "title": "Documented information",
+          "summary": "Control creation/update of documents, identification, format, review/approval, change control.",
+          "keywords": ["document control", "versioning", "configuration"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "modifiable" },
+            { "type": "qualityRule", "value": "traceable" },
+            { "type": "evidence", "value": "inspection" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.2",
+          "code": "8.2",
+          "title": "Requirements for products and services",
+          "summary": "Determine and review customer and statutory/regulatory requirements; keep records of reviews.",
+          "keywords": ["customer requirements", "regulatory", "contract review"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overview.description" },
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "complete" },
+            { "type": "qualityRule", "value": "consistent" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.3",
+          "code": "8.3",
+          "title": "Design and development of products and services",
+          "summary": "Plan, inputs/outputs, controls, reviews, verification/validation, and changes to design.",
+          "keywords": ["design", "verification", "validation", "change control"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "functionalRequirements" },
+            { "type": "srsSection", "value": "nonFunctionalRequirements" },
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "verifiable" },
+            { "type": "evidence", "value": "test" },
+            { "type": "evidence", "value": "analysis" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.4",
+          "code": "8.4",
+          "title": "Control of externally provided processes, products and services",
+          "summary": "Supplier control: selection, evaluation, monitoring, and documented information.",
+          "keywords": ["supplier", "outsourcing", "procurement"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "traceable" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.5",
+          "code": "8.5",
+          "title": "Production and service provision",
+          "summary": "Controlled conditions: instructions, validation, identification/traceability, preservation.",
+          "keywords": ["service provision", "instructions", "traceability"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "qualityRule", "value": "traceable" },
+            { "type": "evidence", "value": "inspection" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.6",
+          "code": "8.6",
+          "title": "Release of products and services",
+          "summary": "Release only after planned arrangements verified and evidence retained.",
+          "keywords": ["release", "acceptance", "evidence"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "test" },
+            { "type": "evidence", "value": "inspection" }
+          ]
+        },
+        {
+          "id": "iso-9001:8.7",
+          "code": "8.7",
+          "title": "Control of nonconforming outputs",
+          "summary": "Identify/control nonconforming outputs; corrections, segregation, concessions, records.",
+          "keywords": ["nonconformity", "rework", "records"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:9.2",
+          "code": "9.2",
+          "title": "Internal audit",
+          "summary": "Plan, establish, implement and maintain audit program; retain audit records.",
+          "keywords": ["internal audit", "program", "records"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "inspection" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:9.3",
+          "code": "9.3",
+          "title": "Management review",
+          "summary": "Top management reviews QMS at planned intervals; decisions and actions are recorded.",
+          "keywords": ["management review", "QMS performance"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        },
+        {
+          "id": "iso-9001:10.2",
+          "code": "10.2",
+          "title": "Nonconformity and corrective action",
+          "summary": "React to nonconformity, evaluate causes, implement actions; update risks and records.",
+          "keywords": ["corrective action", "root cause", "CAPA"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "constraints" },
+            { "type": "evidence", "value": "analysis" },
+            { "type": "evidence", "value": "doc" }
+          ]
+        }
+      ]
+    }
+  ],
+  "qualityRules": [
+    {
+      "id": "qr-atomic",
+      "title": "Atomic",
+      "rule": "Each requirement expresses a single idea.",
+      "rationale": "Simplifies traceability and testing.",
+      "mapsTo": [{ "type": "lint", "value": "noAnd/Or; single imperative" }]
+    },
+    {
+      "id": "qr-unambiguous",
+      "title": "Unambiguous",
+      "rule": "Use precise, testable terms; avoid subjective words.",
+      "rationale": "Prevents misinterpretation.",
+      "mapsTo": [{ "type": "lint", "value": "ban: user-friendly, easy, robust" }]
+    },
+    {
+      "id": "qr-measurable",
+      "title": "Measurable",
+      "rule": "State measurable thresholds where applicable.",
+      "rationale": "Enables objective verification.",
+      "mapsTo": [{ "type": "lint", "value": "hasNumberOrSLA" }]
+    },
+    {
+      "id": "qr-verifiable",
+      "title": "Verifiable",
+      "rule": "Define how to verify (test/analysis/inspection/demo).",
+      "rationale": "Connects to acceptance criteria.",
+      "mapsTo": [{ "type": "srsField", "value": "acceptanceCriteria" }]
+    },
+    {
+      "id": "qr-consistent",
+      "title": "Consistent",
+      "rule": "No conflicts with other requirements or constraints.",
+      "rationale": "Avoids contradictions.",
+      "mapsTo": [{ "type": "lint", "value": "noConflicts" }]
+    },
+    {
+      "id": "qr-complete",
+      "title": "Complete",
+      "rule": "Contains necessary context: rationale, source, constraints.",
+      "rationale": "Supports downstream work.",
+      "mapsTo": [{ "type": "srsField", "value": "rationale" }]
+    },
+    {
+      "id": "qr-traceable",
+      "title": "Traceable",
+      "rule": "Includes identifiers to source and links to tests/design.",
+      "rationale": "Enables coverage and impact analysis.",
+      "mapsTo": [{ "type": "srsField", "value": "related" }]
+    },
+    {
+      "id": "qr-modifiable",
+      "title": "Modifiable",
+      "rule": "Change-friendly formatting and stable identifiers.",
+      "rationale": "Eases maintenance.",
+      "mapsTo": [{ "type": "srsField", "value": "id" }]
+    }
+  ]
+}

@@ -14,6 +14,28 @@ export interface UserRef {
   name?: string;
 }
 
+export interface StdCatalog {
+  version: number;
+  standards: StdSpec[];
+}
+export interface StdSpec {
+  id: string;             // "iso-25010"
+  code: string;           // "ISO/IEC 25010"
+  title: string;
+  edition?: string;
+  url?: string;
+  tags?: string[];
+  clauses: StdClause[];
+}
+export interface StdClause {
+  id: string;             // "25010-pe-time"
+  code: string;           // "PE.TimeBehavior" або "7.5"
+  title: string;
+  summary?: string;
+  keywords?: string[];
+  mapsTo?: Array<{ type: string; value: string }>;
+}
+
 export interface StandardRef {
   /** Standard code, e.g., "ISO/IEC/IEEE 29148:2018" */
   code: string;

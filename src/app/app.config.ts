@@ -18,11 +18,13 @@ import {
 } from 'firebase/firestore';
 
 import { environment } from './environment';
+import { provideHttpClient } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
+    provideHttpClient(),
 
     // 1) Create the [DEFAULT] app
     provideFirebaseApp(() => initializeApp(environment.firebase)),
