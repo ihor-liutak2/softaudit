@@ -82,10 +82,10 @@ import { COLL_REQSPECS } from './req-specs.collections';
         <div class="mt-4">
           <h5 class="mb-2">Requirement Items</h5>
 
-          @if (items?.length) {
+          @if (items.length) {
             <app-req-specs-table
               [items]="items"
-              [projectStandards]="project?.standards ?? []">
+              [projectStandards]="project.standards ?? []">
             </app-req-specs-table>
           } @else {
             <div class="text-muted">No items for this project yet.</div>
