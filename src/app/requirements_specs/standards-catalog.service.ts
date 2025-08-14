@@ -80,4 +80,60 @@ export class StandardsCatalogService {
     return clauses.find((c: { id: string }) => c.id === clauseId);
   }
 
+  /** Map StandardRef[] -> list of srsSection strings (deduped) */
+  mapsToSectionsFor(refs: StandardRef[] | undefined): string[] {
+    if (!refs?.length) return [];
+    const t = (v?: string) => (v ?? '').trim().toLowerCase();
+    const out = new Set<string>();
+
+    for (const r of refs) {
+      const code = t(r.code);
+      const clauseCode = t(r.clause);
+      if (!code) continue;
+
+      // find std by code
+      const std = this.standards().find(s => (s.code || '').trim().toLowerCase() === code);
+      if (!std) continue;
+
+      // clause by clause.code (optional)
+      const clauses = clauseCode
+        ? std.clauses.filter(c => (c.code || '').trim().toLowerCase() === clauseCode)
+        : std.clauses;
+
+      for (const c of clauses) {
+        (c.mapsTo || [])
+          .filter(m => m.type === 'srsSection' && m.value)
+          .forEach(m => out.add(m.value));
+      }
+    }
+    return Array.from(out);
+  }
+
+  /** Map StandardRef[] -> list of qualityRule strings (deduped) */
+  mapsToQualityRulesFor(refs: StandardRef[] | undefined): string[] {
+    if (!refs?.length) return [];
+    const t = (v?: string) => (v ?? '').trim().toLowerCase();
+    const out = new Set<string>();
+
+    for (const r of refs) {
+      const code = t(r.code);
+      const clauseCode = t(r.clause);
+      if (!code) continue;
+
+      const std = this.standards().find(s => (s.code || '').trim().toLowerCase() === code);
+      if (!std) continue;
+
+      const clauses = clauseCode
+        ? std.clauses.filter(c => (c.code || '').trim().toLowerCase() === clauseCode)
+        : std.clauses;
+
+      for (const c of clauses) {
+        (c.mapsTo || [])
+          .filter(m => m.type === 'qualityRule' && m.value)
+          .forEach(m => out.add(m.value));
+      }
+    }
+    return Array.from(out);
+  }
+
 }

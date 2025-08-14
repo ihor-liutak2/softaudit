@@ -21,6 +21,8 @@ import {
   Id,
 } from './req-specs.types';
 import { COLL_REQSPECS } from './req-specs.collections';
+import { StandardsCatalogService } from './standards-catalog.service';
+
 
 @Component({
   selector: 'app-req-specs-srs',
@@ -82,6 +84,47 @@ import { COLL_REQSPECS } from './req-specs.collections';
             }
           </div>
         </div>
+
+        <!-- SRS guidance from standards (mapsTo → sections) -->
+        <div class="card mb-3">
+          <div class="card-header fw-semibold">Coverage (SRS sections from standards)</div>
+          <div class="card-body">
+            @if (sectionCoverage().length) {
+              <!-- Covered -->
+              <div class="mb-2">
+                <span class="me-2 fw-semibold">Covered:</span>
+                @for (s of sectionCoverage(); track s.key) {
+                  @if (s.status === 'covered') {
+                    <span class="badge text-bg-success me-1">{{ s.label }}</span>
+                  }
+                }
+              </div>
+
+              <!-- Pending (expected by project standards, but no matching items yet) -->
+              <div class="mb-2">
+                <span class="me-2 fw-semibold">Pending:</span>
+                @for (s of sectionCoverage(); track s.key) {
+                  @if (s.status === 'pending') {
+                    <span class="badge text-bg-warning me-1">{{ s.label }}</span>
+                  }
+                }
+              </div>
+
+              <!-- Incidental (implemented by items but not declared in project standards) -->
+              <div class="mb-0">
+                <span class="me-2 fw-semibold">Incidental:</span>
+                @for (s of sectionCoverage(); track s.key) {
+                  @if (s.status === 'incidental') {
+                    <span class="badge text-bg-secondary me-1">{{ s.label }}</span>
+                  }
+                }
+              </div>
+            } @else {
+              <span class="text-muted">—</span>
+            }
+          </div>
+        </div>
+
 
         <!-- Standards (project-level) -->
         <div class="card mb-3">
@@ -180,6 +223,16 @@ import { COLL_REQSPECS } from './req-specs.collections';
                           </span>
                         }
                       </div>
+                      <!-- Quality rules guidance (from mapsTo: qualityRule) -->
+                      <div class="small mt-1">
+                        @for (qb of qualityBadges(row.item); track qb.rule) {
+                          <span class="badge me-1"
+                                [ngClass]="qb.ok ? 'text-bg-success' : 'text-bg-warning'">
+                            {{ qb.label }}{{ qb.ok ? ' ✓' : ' ?' }}
+                          </span>
+                        }
+                      </div>
+
                       @if (row.item.acceptanceCriteria?.length) {
                         <div class="small mt-1">
                           <em>Acceptance criteria:</em>
@@ -222,6 +275,16 @@ import { COLL_REQSPECS } from './req-specs.collections';
                           </span>
                         }
                       </div>
+                      <!-- Quality rules guidance (from mapsTo: qualityRule) -->
+                      <div class="small mt-1">
+                        @for (qb of qualityBadges(row.item); track qb.rule) {
+                          <span class="badge me-1"
+                                [ngClass]="qb.ok ? 'text-bg-success' : 'text-bg-warning'">
+                            {{ qb.label }}{{ qb.ok ? ' ✓' : ' ?' }}
+                          </span>
+                        }
+                      </div>
+
                       @if (row.item.acceptanceCriteria?.length) {
                         <div class="small mt-1">
                           <em>Acceptance criteria:</em>
@@ -277,6 +340,8 @@ export class ReqSpecsSrsComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private firestore = inject(Firestore);
   private reqSpecs = inject(ReqSpecsService);
+  private catalog = inject(StandardsCatalogService);
+
 
   project = signal<ReqSpecsProject | undefined>(undefined);
   items = signal<ReqSpecsItem[]>([]);
@@ -358,6 +423,8 @@ export class ReqSpecsSrsComponent implements OnInit {
     // stable sort roots by order/title
     list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.title.localeCompare(b.title));
     this.items.set(list);
+
+    await this.catalog.load?.();
   }
 
   /** Flatten requirements tree by type to rows of { item, level } */
@@ -599,5 +666,123 @@ export class ReqSpecsSrsComponent implements OnInit {
     return (list ?? []).map(x => (x?.title ?? '').trim()).filter(Boolean).join(', ');
   }
 
+  /** Human-readable labels for SRS sections coming from mapsTo */
+private SECTION_LABELS: Record<string, string> = {
+  'functionalRequirements': 'Functional requirements',
+  'nonFunctionalRequirements': 'Non-functional requirements',
+  'nonFunctionalRequirements.performance': 'Performance',
+  'nonFunctionalRequirements.security': 'Security',
+  'nonFunctionalRequirements.reliability': 'Reliability',
+  'nonFunctionalRequirements.usability': 'Usability',
+  'nonFunctionalRequirements.maintainability': 'Maintainability',
+  'nonFunctionalRequirements.portability': 'Portability',
+  'constraints': 'Constraints',
+};
+
+private sectionLabel(key: string): string {
+  if (this.SECTION_LABELS[key]) return this.SECTION_LABELS[key];
+  // Fallback: last segment → Title Case
+  const last = key.split('.').pop() || key;
+  return last.charAt(0).toUpperCase() + last.slice(1);
+}
+
+/** Sections expected by selected project standards */
+sectionsExpected = computed(() => {
+  const p = this.project();
+  return this.catalog.mapsToSectionsFor(p?.standards ?? []);
+});
+
+/** Sections actually covered by any item standards (union of all items) */
+sectionsImplemented = computed(() => {
+  const set = new Set<string>();
+  for (const it of this.items()) {
+    const secs = this.catalog.mapsToSectionsFor(it.standards ?? []);
+    secs.forEach(s => set.add(s));
+  }
+  return Array.from(set);
+});
+
+/** Coverage status per section: covered | pending | incidental */
+sectionCoverage = computed(() => {
+  const exp = new Set(this.sectionsExpected());
+  const imp = new Set(this.sectionsImplemented());
+  const all = new Set<string>([...exp, ...imp]);
+
+  const rows = Array.from(all).map(key => {
+    const status = exp.has(key) && imp.has(key)
+      ? 'covered'
+      : exp.has(key) && !imp.has(key)
+        ? 'pending'
+        : 'incidental';
+    return { key, label: this.sectionLabel(key), status };
+  });
+
+  // stable sort by status group then label
+  const rank: Record<string, number> = { covered: 0, pending: 1, incidental: 2 };
+  rows.sort((a, b) => (rank[a.status] - rank[b.status]) || a.label.localeCompare(b.label));
+  return rows;
+});
+
+/** Expected quality rules for item: from its own standards + project standards */
+private expectedRulesFor(item: ReqSpecsItem): string[] {
+  const combined: StandardRef[] = [
+    ...(item.standards ?? []),
+    ...(this.project()?.standards ?? []),
+  ];
+  // dedupe
+  const set = new Set(this.catalog.mapsToQualityRulesFor(combined));
+  return Array.from(set);
+}
+
+/** Heuristic checks */
+private hasQuantitativeText(text?: string): boolean {
+  if (!text) return false;
+  // numbers + units or constraint phrases
+  const unit = /\b(%|ms|s|sec|seconds|min|minutes|h|hrs|rps|tps|req\/s|users|KB|MB|GB|GiB|MiB|bps|kbps|Mbps|Hz|kHz|°C|C|F)\b/i;
+  const number = /\b\d+(\.\d+)?\b/;
+  const comp = /\b(within|under|less than|no more than|at most|at least|>=|<=|<|>)\b/i;
+  return (number.test(text) && unit.test(text)) || comp.test(text);
+}
+
+private isMeasurable(item: ReqSpecsItem): boolean {
+  return this.hasQuantitativeText(item.title)
+      || this.hasQuantitativeText(item.description)
+      || (item.acceptanceCriteria ?? []).some(ac => this.hasQuantitativeText(ac));
+}
+
+private isVerifiable(item: ReqSpecsItem): boolean {
+  // simple: presence of acceptance criteria means verifiable
+  return !!(item.acceptanceCriteria && item.acceptanceCriteria.length);
+}
+
+private isTraceable(item: ReqSpecsItem): boolean {
+  return !!((item.links && item.links.length) || (item.related && item.related.length) || item.source);
+}
+
+/** Build badges model for template */
+qualityBadges(item: ReqSpecsItem): Array<{ rule: string; label: string; ok: boolean }> {
+  const expected = this.expectedRulesFor(item);
+  if (!expected.length) return [];
+
+  const toBadge = (rule: string) => {
+    const r = rule.toLowerCase();
+    if (r === 'measurable') return { rule: 'measurable', label: 'Measurable', ok: this.isMeasurable(item) };
+    if (r === 'verifiable') return { rule: 'verifiable', label: 'Verifiable', ok: this.isVerifiable(item) };
+    if (r === 'traceable')  return { rule: 'traceable',  label: 'Traceable',  ok: this.isTraceable(item) };
+    // default: unknown rule → neutral
+    return { rule, label: rule.charAt(0).toUpperCase() + rule.slice(1), ok: true };
+  };
+
+  // dedupe & keep stable order
+  const seen = new Set<string>();
+  const out: Array<{ rule: string; label: string; ok: boolean }> = [];
+  for (const r of expected) {
+    const key = r.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(toBadge(key));
+  }
+  return out;
+}
 
 }
