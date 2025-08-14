@@ -48,21 +48,6 @@ export class LoginComponent {
   password = '';
   showPassword = false;
 
-//   async login() {
-//     if (!this.email || !this.password) {
-//       this.toastService.show('Please enter email and password', 'warning');
-//       return;
-//     }
-
-//     try {
-//       await this.userService.login(this.email, this.password);
-//       this.toastService.show('Login successful!', 'success');
-//       this.router.navigate(['/home']);
-//     } catch (err: any) {
-//       this.toastService.show('Login failed: ' + err.message, 'danger');
-//     }
-//   }
-
 
 // inside LoginComponent
 

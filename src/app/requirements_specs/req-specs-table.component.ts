@@ -23,18 +23,26 @@ import { ReqSpecsItem, StandardRef, UserRef } from './req-specs.types';
       <tbody>
         @for (item of items; track item.id) {
           <tr>
-            <!-- Title + optional tags -->
+            <!-- Title + short description + tags -->
             <td>
               <div class="fw-semibold">{{ item.title }}</div>
-              <div class="text-muted small" *ngIf="item.description">{{ item.description }}</div>
-              <div class="mt-1" *ngIf="item.tags?.length">
-                <span
-                  class="badge rounded-pill text-bg-light me-1"
-                  *ngFor="let t of previewTags(item.tags)">{{ t }}</span>
-                <span class="text-muted small" *ngIf="(item.tags?.length || 0) > 3">
-                  +{{ (item.tags?.length || 0) - 3 }}
-                </span>
-              </div>
+
+              @if (item.description) {
+                <div class="text-muted small">
+                  {{ short(item.description, 100) }}
+                </div>
+              }
+
+              @if (item.tags?.length) {
+                <div class="mt-1">
+                  @for (t of previewTags(item.tags); track t) {
+                    <span class="badge rounded-pill text-bg-light me-1">{{ t }}</span>
+                  }
+                  @if ((item.tags?.length || 0) > 3) {
+                    <span class="text-muted small">+{{ (item.tags?.length || 0) - 3 }}</span>
+                  }
+                </div>
+              }
             </td>
 
             <!-- Type -->
@@ -54,11 +62,14 @@ import { ReqSpecsItem, StandardRef, UserRef } from './req-specs.types';
               </span>
             </td>
 
-            <!-- Standards summary -->
+            <!-- Standards summary + coverage pill -->
             <td>
               @if (item.standards?.length) {
                 <div class="small">
                   {{ standardsSummary(item.standards) }}
+                  <span class="ms-2" [class]="coveragePillClass(itemCoverageStatus(item))">
+                    {{ coveragePillText(itemCoverageStatus(item)) }}
+                  </span>
                 </div>
               } @else {
                 <span class="text-muted">—</span>
@@ -72,13 +83,14 @@ import { ReqSpecsItem, StandardRef, UserRef } from './req-specs.types';
                   class="text-decoration-none"
                   [href]="firstLink(item.links)?.url || '#'"
                   target="_blank"
-                  rel="noopener noreferrer"
-                >
+                  rel="noopener noreferrer">
                   {{ linkTitle(firstLink(item.links)) }}
                 </a>
-                <span class="text-muted small" *ngIf="(item.links?.length || 0) > 1">
-                  (+{{ (item.links?.length || 0) - 1 }})
-                </span>
+                @if ((item.links?.length || 0) > 1) {
+                  <span class="text-muted small">
+                    (+{{ (item.links?.length || 0) - 1 }})
+                  </span>
+                }
               } @else {
                 <span class="text-muted">—</span>
               }
@@ -87,9 +99,11 @@ import { ReqSpecsItem, StandardRef, UserRef } from './req-specs.types';
             <!-- Created (date + by) -->
             <td>
               <div>{{ item.createdAt | date:'shortDate' }}</div>
-              <div class="text-muted small" *ngIf="creatorLabel(item.createdBy)">
-                by {{ creatorLabel(item.createdBy) }}
-              </div>
+              @if (creatorLabel(item.createdBy)) {
+                <div class="text-muted small">
+                  by {{ creatorLabel(item.createdBy) }}
+                </div>
+              }
             </td>
           </tr>
         }
@@ -108,9 +122,18 @@ import { ReqSpecsItem, StandardRef, UserRef } from './req-specs.types';
 export class ReqSpecsTableComponent {
   @Input() items: ReqSpecsItem[] = [];
 
+  /** Optional: project-level standards to compute per-item coverage */
+  @Input() projectStandards: StandardRef[] = [];
+
   // --- View helpers (UI only) -----------------------------------------------
 
-  /** Returns up to 3 tags for compact preview */
+  /** Truncate long text with an ellipsis */
+  short(text: string, max = 100): string {
+    if (!text) return '';
+    return text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '…';
+  }
+
+  /** Show up to 3 tags for compact preview */
   previewTags(tags: string[] = []): string[] {
     return tags.slice(0, 3);
   }
@@ -183,6 +206,58 @@ export class ReqSpecsTableComponent {
       return new URL(url).host || url;
     } catch {
       return url;
+    }
+  }
+
+  // --- Coverage helpers ------------------------------------------------------
+
+  /** Normalize (trim + lowercase) */
+  private normStd(s?: StandardRef) {
+    const t = (v?: string) => (v ?? '').trim().toLowerCase();
+    return s ? { code: t(s.code), clause: t(s.clause) } : { code: '', clause: '' };
+  }
+
+  /** Item-level coverage vs the project standards */
+  itemCoverageStatus(item: ReqSpecsItem): 'covered' | 'partial' | 'none' {
+    const proj = this.projectStandards ?? [];
+    if (!proj.length) return 'none';
+
+    const pNorm = proj.map(s => this.normStd(s));
+    let hasLoose = false;
+
+    for (const r of (item.standards ?? [])) {
+      const n = this.normStd(r);
+      if (!n.code) continue;
+
+      for (const ps of pNorm) {
+        if (ps.code !== n.code) continue;
+
+        // exact: same code + same clause, or project has no clause → any clause counts exact
+        const exact = (!!ps.clause && ps.clause === n.clause) || (!ps.clause);
+        if (exact) return 'covered';
+
+        // loose match: same standard code, different clause
+        hasLoose = true;
+      }
+    }
+    return hasLoose ? 'partial' : 'none';
+  }
+
+  /** Badge class for coverage pill */
+  coveragePillClass(status: 'covered' | 'partial' | 'none'): string {
+    switch (status) {
+      case 'covered': return 'badge text-bg-success';
+      case 'partial': return 'badge text-bg-warning';
+      default: return 'badge text-bg-secondary';
+    }
+  }
+
+  /** Label for coverage pill */
+  coveragePillText(status: 'covered' | 'partial' | 'none'): string {
+    switch (status) {
+      case 'covered': return 'covers';
+      case 'partial': return 'partial';
+      default: return '—';
     }
   }
 }

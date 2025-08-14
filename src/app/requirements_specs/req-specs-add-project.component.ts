@@ -8,6 +8,7 @@ import { ReqSpecsProject, UserRef } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
 import { ReqSpecsProjectFormComponent } from './req-specs-project-form.component';
 import { UserService } from '../core/user/user.service';
+import { ToastService } from '../core/ui/toast.service';
 
 @Component({
   selector: 'app-req-specs-add-project',
@@ -41,6 +42,8 @@ export class ReqSpecsAddProjectComponent implements OnInit {
   companies: Company[] = [];
   sectors: Sector[] = [];
   currentUserRef: UserRef | undefined;
+
+  private toastService = inject(ToastService);
 
   async ngOnInit(): Promise<void> {
     // Map current auth user -> UserRef (uid/name/email)
@@ -83,8 +86,13 @@ export class ReqSpecsAddProjectComponent implements OnInit {
   }
 
   async onSave(updated: ReqSpecsProject) {
-    await this.reqSpecs.saveProject(updated);
-    alert('Project saved successfully');
-    this.router.navigate(['/req-specs']);
+    try {
+      await this.reqSpecs.saveProject(updated);
+      this.toastService.show('Project saved successfully', 'success');
+      this.router.navigate(['/req-specs']);
+    } catch (err) {
+      console.error('[ReqSpecsAddProject] save failed', err);
+      this.toastService.show('Failed to save project. Please try again.', 'danger');
+    }
   }
 }

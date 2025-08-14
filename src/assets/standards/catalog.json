@@ -105,41 +105,434 @@
       "title": "Requirements engineering",
       "edition": "2018",
       "url": "https://iso.org/standard/72089.html",
-      "tags": ["requirements", "engineering"],
+      "tags": ["requirements", "engineering", "srs", "process"],
       "clauses": [
         {
-          "id": "29148-req-attributes",
-          "code": "5.2",
-          "title": "Requirement attributes",
-          "summary": "Each requirement includes rationale, source, priority, and verification method.",
-          "keywords": ["rationale", "source", "priority", "V&V"],
+          "id": "29148-proc-elicitation",
+          "code": "PROC.Elicitation",
+          "title": "Elicitation",
+          "summary": "Plan and conduct elicitation using appropriate techniques; record sources and outcomes.",
+          "keywords": ["elicitation", "interviews", "workshops", "sources"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.elicitation" }]
+        },
+        {
+          "id": "29148-proc-analysis",
+          "code": "PROC.Analysis",
+          "title": "Analysis",
+          "summary": "Analyze, classify, and decompose stakeholder needs into candidate requirements.",
+          "keywords": ["analysis", "decomposition", "classification"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.analysis" }]
+        },
+        {
+          "id": "29148-proc-specification",
+          "code": "PROC.Specification",
+          "title": "Specification",
+          "summary": "Specify requirements clearly and consistently in a managed information item (e.g., SRS).",
+          "keywords": ["specification", "documentation", "SRS"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific" }]
+        },
+        {
+          "id": "29148-proc-validation",
+          "code": "PROC.Validation",
+          "title": "Validation",
+          "summary": "Confirm the specified requirements satisfy stakeholder needs and intended use.",
+          "keywords": ["validation", "needs", "intended use"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.validation" }]
+        },
+        {
+          "id": "29148-proc-verification",
+          "code": "PROC.Verification",
+          "title": "Verification",
+          "summary": "Establish verification methods and acceptance criteria for each requirement.",
+          "keywords": ["verification", "test", "inspection", "analysis", "demo"],
           "mapsTo": [
-            { "type": "srsSection", "value": "functionalRequirements" },
-            { "type": "qualityRule", "value": "complete" },
+            { "type": "srsSection", "value": "verificationAndValidation.verification" },
             { "type": "qualityRule", "value": "verifiable" }
           ]
         },
         {
-          "id": "29148-traceability",
-          "code": "5.4",
+          "id": "29148-proc-management",
+          "code": "PROC.Management",
+          "title": "Requirements management",
+          "summary": "Baseline, version, and control changes; maintain status, ownership, and history.",
+          "keywords": ["baseline", "change control", "status", "versioning"],
+          "mapsTo": [{ "type": "srsSection", "value": "managementAndChangeControl" }]
+        },
+        {
+          "id": "29148-proc-prioritization",
+          "code": "PROC.Prioritization",
+          "title": "Prioritization",
+          "summary": "Prioritize requirements (e.g., MoSCoW, value/risk) and record rationale.",
+          "keywords": ["priority", "MoSCoW", "value", "risk"],
+          "mapsTo": [{ "type": "qualityRule", "value": "prioritized" }]
+        },
+        {
+          "id": "29148-proc-traceability",
+          "code": "PROC.Traceability",
           "title": "Traceability",
-          "summary": "Bidirectional links between requirements, design, tests, and sources.",
+          "summary": "Maintain bidirectional trace links to sources, design, code, tests, and risks.",
           "keywords": ["traceability", "coverage", "impact analysis"],
+          "mapsTo": [{ "type": "qualityRule", "value": "traceable" }]
+        },
+
+        {
+          "id": "29148-req-attributes",
+          "code": "REQ.Attributes",
+          "title": "Requirement attributes",
+          "summary": "Capture attributes such as ID, source, rationale, priority, risk, and verification method.",
+          "keywords": ["attributes", "rationale", "source", "risk"],
           "mapsTo": [
-            { "type": "srsSection", "value": "constraints" },
-            { "type": "qualityRule", "value": "traceable" }
+            { "type": "srsSection", "value": "specific" },
+            { "type": "qualityRule", "value": "complete" }
           ]
         },
         {
-          "id": "29148-verification",
-          "code": "6.4",
-          "title": "Verification & validation",
-          "summary": "Define verification method (test/analysis/inspection/demo) and acceptance criteria.",
-          "keywords": ["verification", "validation", "acceptance"],
+          "id": "29148-req-necessary",
+          "code": "CHAR.Necessary",
+          "title": "Necessary",
+          "summary": "Each requirement is needed to meet a stakeholder need or constraint.",
+          "keywords": ["necessary", "need"],
+          "mapsTo": [{ "type": "qualityRule", "value": "necessary" }]
+        },
+        {
+          "id": "29148-req-correct",
+          "code": "CHAR.Correct",
+          "title": "Correct",
+          "summary": "Accurately represents a true need with no factual errors.",
+          "keywords": ["correct", "valid"],
+          "mapsTo": [{ "type": "qualityRule", "value": "correct" }]
+        },
+        {
+          "id": "29148-req-unambiguous",
+          "code": "CHAR.Unambiguous",
+          "title": "Unambiguous",
+          "summary": "Statement permits only one interpretation by all stakeholders.",
+          "keywords": ["clarity", "single meaning"],
+          "mapsTo": [{ "type": "qualityRule", "value": "unambiguous" }]
+        },
+        {
+          "id": "29148-req-complete",
+          "code": "CHAR.Complete",
+          "title": "Complete",
+          "summary": "Contains all necessary information to implement and verify; no TBDs.",
+          "keywords": ["complete", "no gaps"],
+          "mapsTo": [{ "type": "qualityRule", "value": "complete" }]
+        },
+        {
+          "id": "29148-req-singular",
+          "code": "CHAR.Singular",
+          "title": "Singular (atomic)",
+          "summary": "Specifies one thing only; avoids conjunctions that bundle multiple requirements.",
+          "keywords": ["atomic", "single", "test case mapping"],
+          "mapsTo": [{ "type": "qualityRule", "value": "singular" }]
+        },
+        {
+          "id": "29148-req-feasible",
+          "code": "CHAR.Feasible",
+          "title": "Feasible",
+          "summary": "Realizable within known constraints (technology, cost, schedule).",
+          "keywords": ["feasible", "practical"],
+          "mapsTo": [{ "type": "qualityRule", "value": "feasible" }]
+        },
+        {
+          "id": "29148-req-verifiable",
+          "code": "CHAR.Verifiable",
+          "title": "Verifiable",
+          "summary": "Objective verification method can be defined and executed.",
+          "keywords": ["verifiable", "testable"],
+          "mapsTo": [{ "type": "qualityRule", "value": "verifiable" }]
+        },
+        {
+          "id": "29148-req-prioritized",
+          "code": "CHAR.Prioritized",
+          "title": "Prioritized",
+          "summary": "Priority or rank is stated to guide planning and trade-offs.",
+          "keywords": ["priority", "rank"],
+          "mapsTo": [{ "type": "qualityRule", "value": "prioritized" }]
+        },
+        {
+          "id": "29148-req-consistent",
+          "code": "CHAR.Consistent",
+          "title": "Consistent",
+          "summary": "No internal conflicts and consistent terminology across the SRS.",
+          "keywords": ["consistency", "terminology"],
+          "mapsTo": [{ "type": "qualityRule", "value": "consistent" }]
+        },
+        {
+          "id": "29148-req-modifiable",
+          "code": "CHAR.Modifiable",
+          "title": "Modifiable",
+          "summary": "SRS organization and notation allow easy updates with controlled impact.",
+          "keywords": ["modifiable", "maintainable"],
+          "mapsTo": [{ "type": "qualityRule", "value": "modifiable" }]
+        },
+        {
+          "id": "29148-req-traceable",
+          "code": "CHAR.Traceable",
+          "title": "Traceable",
+          "summary": "Each requirement uniquely identified and linked to its sources and realizations.",
+          "keywords": ["traceability", "coverage"],
+          "mapsTo": [{ "type": "qualityRule", "value": "traceable" }]
+        },
+
+        {
+          "id": "29148-srs-purpose",
+          "code": "SRS.Introduction.Purpose",
+          "title": "SRS purpose",
+          "summary": "State SRS purpose, scope, audience, and usage.",
+          "keywords": ["purpose", "audience"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.purpose" }]
+        },
+        {
+          "id": "29148-srs-scope",
+          "code": "SRS.Introduction.Scope",
+          "title": "SRS scope",
+          "summary": "Define product scope, objectives, and high-level benefits.",
+          "keywords": ["scope", "objectives"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.scope" }]
+        },
+        {
+          "id": "29148-srs-defs",
+          "code": "SRS.Introduction.Definitions",
+          "title": "Definitions and acronyms",
+          "summary": "Provide glossary and controlled vocabulary for consistent use.",
+          "keywords": ["glossary", "terms"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.definitions" }]
+        },
+        {
+          "id": "29148-srs-refs",
+          "code": "SRS.Introduction.References",
+          "title": "References",
+          "summary": "List reference documents, standards, and related specs.",
+          "keywords": ["references", "standards"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.references" }]
+        },
+        {
+          "id": "29148-srs-overview",
+          "code": "SRS.Introduction.Overview",
+          "title": "Overview",
+          "summary": "Outline SRS organization and how to navigate the document.",
+          "keywords": ["overview", "structure"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.overview" }]
+        },
+
+        {
+          "id": "29148-srs-perspective",
+          "code": "SRS.Overall.ProductPerspective",
+          "title": "Product perspective",
+          "summary": "Context, relationships to other systems, dependencies.",
+          "keywords": ["context", "interfaces"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.productPerspective" }]
+        },
+        {
+          "id": "29148-srs-functions",
+          "code": "SRS.Overall.ProductFunctions",
+          "title": "Product functions",
+          "summary": "High-level functional capabilities of the product.",
+          "keywords": ["functions", "capabilities"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.productFunctions" }]
+        },
+        {
+          "id": "29148-srs-users",
+          "code": "SRS.Overall.UserCharacteristics",
+          "title": "User characteristics",
+          "summary": "User classes, skills, accessibility needs, operating profiles.",
+          "keywords": ["users", "personas", "a11y"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.userCharacteristics" }]
+        },
+        {
+          "id": "29148-srs-constraints",
+          "code": "SRS.Overall.Constraints",
+          "title": "Constraints",
+          "summary": "Regulatory, legal, hardware/software, and operational constraints.",
+          "keywords": ["constraints", "regulatory"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.constraints" }]
+        },
+        {
+          "id": "29148-srs-assumptions",
+          "code": "SRS.Overall.AssumptionsDependencies",
+          "title": "Assumptions and dependencies",
+          "summary": "List assumptions and external dependencies affecting scope.",
+          "keywords": ["assumptions", "dependencies"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.assumptions" }]
+        },
+
+        {
+          "id": "29148-classes-stakeholder",
+          "code": "CLASSES.StakeholderRequirements",
+          "title": "Stakeholder requirements",
+          "summary": "Express needs and constraints of stakeholders at the problem level.",
+          "keywords": ["stakeholder needs", "business"],
+          "mapsTo": [{ "type": "srsSection", "value": "stakeholderRequirements" }]
+        },
+        {
+          "id": "29148-classes-system",
+          "code": "CLASSES.SystemRequirements",
+          "title": "System requirements",
+          "summary": "Derived, allocated, and implementable requirements for the system.",
+          "keywords": ["system reqs", "derived"],
+          "mapsTo": [{ "type": "srsSection", "value": "systemRequirements" }]
+        },
+        {
+          "id": "29148-classes-functional",
+          "code": "CLASSES.Functional",
+          "title": "Functional requirements",
+          "summary": "Behavioral capabilities observable at interfaces.",
+          "keywords": ["functional", "use cases"],
+          "mapsTo": [{ "type": "srsSection", "value": "functionalRequirements" }]
+        },
+        {
+          "id": "29148-classes-quality",
+          "code": "CLASSES.Quality",
+          "title": "Quality requirements",
+          "summary": "Quality characteristics (e.g., performance, security, usability).",
+          "keywords": ["non-functional", "quality attributes"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements" }]
+        },
+        {
+          "id": "29148-classes-interface",
+          "code": "CLASSES.Interface",
+          "title": "Interface requirements",
+          "summary": "User, software, hardware, and communication interfaces.",
+          "keywords": ["interfaces", "API", "UI"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.externalInterfaces" }]
+        },
+        {
+          "id": "29148-classes-constraint",
+          "code": "CLASSES.Constraint",
+          "title": "Design and implementation constraints",
+          "summary": "Mandated technologies, standards, and operational constraints.",
+          "keywords": ["constraints", "mandates"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.designConstraints" }]
+        },
+
+        {
+          "id": "29148-repr-natural-lang",
+          "code": "REPR.NaturalLanguage",
+          "title": "Natural language guidance",
+          "summary": "Use consistent terms, simple sentence structures, and active voice.",
+          "keywords": ["writing", "style", "clarity"],
+          "mapsTo": [{ "type": "qualityRule", "value": "unambiguous" }]
+        },
+        {
+          "id": "29148-repr-models",
+          "code": "REPR.Models",
+          "title": "Models and diagrams",
+          "summary": "Use appropriate models (e.g., scenarios, state, data) to clarify requirements.",
+          "keywords": ["modeling", "diagrams", "UML"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.models" }]
+        },
+        {
+          "id": "29148-repr-use-cases",
+          "code": "REPR.UseCases",
+          "title": "Use cases and scenarios",
+          "summary": "Capture actor goals, main flows, and alternative paths.",
+          "keywords": ["use case", "scenario"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.functions" }]
+        },
+
+        {
+          "id": "29148-nfr-performance",
+          "code": "NFR.Performance",
+          "title": "Performance",
+          "summary": "Response time, throughput, and capacity targets with conditions.",
+          "keywords": ["latency", "throughput", "load"],
           "mapsTo": [
-            { "type": "srsSection", "value": "functionalRequirements" },
+            { "type": "srsSection", "value": "nonFunctionalRequirements.performance" },
             { "type": "qualityRule", "value": "verifiable" }
           ]
+        },
+        {
+          "id": "29148-nfr-reliability",
+          "code": "NFR.Reliability",
+          "title": "Reliability",
+          "summary": "Failure rates, MTBF/MTTR, and recovery requirements.",
+          "keywords": ["reliability", "MTBF", "MTTR"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.reliability" }]
+        },
+        {
+          "id": "29148-nfr-availability",
+          "code": "NFR.Availability",
+          "title": "Availability",
+          "summary": "Uptime objectives, redundancy, and maintenance windows.",
+          "keywords": ["availability", "uptime", "SLA"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.availability" }]
+        },
+        {
+          "id": "29148-nfr-security",
+          "code": "NFR.Security",
+          "title": "Security",
+          "summary": "AuthN/AuthZ, confidentiality, integrity, audit, and privacy.",
+          "keywords": ["security", "auth", "privacy"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        },
+        {
+          "id": "29148-nfr-safety",
+          "code": "NFR.Safety",
+          "title": "Safety",
+          "summary": "Hazard identification, risk reduction, safe states.",
+          "keywords": ["safety", "hazard", "risk"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.safety" }]
+        },
+        {
+          "id": "29148-nfr-usability",
+          "code": "NFR.Usability",
+          "title": "Usability",
+          "summary": "Learnability, efficiency, error tolerance, and accessibility.",
+          "keywords": ["usability", "a11y"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.usability" }]
+        },
+        {
+          "id": "29148-nfr-maintainability",
+          "code": "NFR.Maintainability",
+          "title": "Maintainability",
+          "summary": "Modularity, diagnostics, configuration, and logging.",
+          "keywords": ["maintainability", "supportability"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.maintainability" }]
+        },
+        {
+          "id": "29148-nfr-portability",
+          "code": "NFR.Portability",
+          "title": "Portability",
+          "summary": "Supported platforms, data migration, and install/uninstall.",
+          "keywords": ["portability", "platforms"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.portability" }]
+        },
+        {
+          "id": "29148-nfr-compatibility",
+          "code": "NFR.Compatibility",
+          "title": "Compatibility",
+          "summary": "Coexistence and interoperability with other systems.",
+          "keywords": ["interoperability", "compatibility"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.compatibility" }]
+        },
+
+        {
+          "id": "29148-vv-criteria",
+          "code": "V&V.Criteria",
+          "title": "Acceptance criteria",
+          "summary": "Define measurable pass/fail criteria per requirement.",
+          "keywords": ["acceptance", "criteria"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "verificationAndValidation.acceptanceCriteria" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        },
+        {
+          "id": "29148-change-control",
+          "code": "MGMT.ChangeControl",
+          "title": "Change control",
+          "summary": "Evaluate change requests, assess impact, and update baselines and trace links.",
+          "keywords": ["change", "impact", "baseline"],
+          "mapsTo": [{ "type": "srsSection", "value": "managementAndChangeControl" }]
+        },
+        {
+          "id": "29148-risk",
+          "code": "MGMT.Risk",
+          "title": "Risk considerations",
+          "summary": "Capture requirement-related risks and mitigation strategies.",
+          "keywords": ["risk", "mitigation"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.risk" }]
         }
       ]
     },
@@ -296,6 +689,1196 @@
             { "type": "srsSection", "value": "constraints" },
             { "type": "evidence", "value": "analysis" },
             { "type": "evidence", "value": "doc" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ieee-830",
+      "code": "IEEE 830-1998",
+      "title": "Recommended Practice for Software Requirements Specifications",
+      "edition": "1998",
+      "url": "https://standards.ieee.org/standard/830-1998.html",
+      "tags": ["srs", "requirements", "template", "guideline"],
+      "clauses": [
+        {
+          "id": "ieee830-sec-intro-purpose",
+          "code": "SEC.Introduction.Purpose",
+          "title": "Purpose",
+          "summary": "State the purpose of the SRS and intended audience.",
+          "keywords": ["purpose", "audience", "document intent"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.purpose" }]
+        },
+        {
+          "id": "ieee830-sec-intro-scope",
+          "code": "SEC.Introduction.Scope",
+          "title": "Scope",
+          "summary": "Define the software product scope and major objectives.",
+          "keywords": ["scope", "boundaries", "objectives"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.scope" }]
+        },
+        {
+          "id": "ieee830-sec-intro-defs",
+          "code": "SEC.Introduction.Definitions",
+          "title": "Definitions, acronyms, abbreviations",
+          "summary": "Provide glossary of terms used throughout the SRS.",
+          "keywords": ["glossary", "definitions", "acronyms"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.definitions" }]
+        },
+        {
+          "id": "ieee830-sec-intro-refs",
+          "code": "SEC.Introduction.References",
+          "title": "References",
+          "summary": "List referenced documents and standards.",
+          "keywords": ["references", "standards", "documents"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.references" }]
+        },
+        {
+          "id": "ieee830-sec-intro-overview",
+          "code": "SEC.Introduction.Overview",
+          "title": "Overview",
+          "summary": "Describe the SRS organization and how to read it.",
+          "keywords": ["overview", "structure", "reading guide"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.overview" }]
+        },
+
+        {
+          "id": "ieee830-sec-overall-perspective",
+          "code": "SEC.Overall.ProductPerspective",
+          "title": "Product perspective",
+          "summary": "Context of the product, system interfaces, dependencies.",
+          "keywords": ["context", "environment", "interfaces"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.productPerspective" }]
+        },
+        {
+          "id": "ieee830-sec-overall-functions",
+          "code": "SEC.Overall.ProductFunctions",
+          "title": "Product functions",
+          "summary": "High-level functions the system must provide.",
+          "keywords": ["functions", "capabilities"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.productFunctions" }]
+        },
+        {
+          "id": "ieee830-sec-overall-users",
+          "code": "SEC.Overall.UserCharacteristics",
+          "title": "User characteristics",
+          "summary": "Profiles of target users, skills, education, experience.",
+          "keywords": ["users", "personas", "skills"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.userCharacteristics" }]
+        },
+        {
+          "id": "ieee830-sec-overall-constraints",
+          "code": "SEC.Overall.Constraints",
+          "title": "General constraints",
+          "summary": "Regulatory, hardware, operational, or other constraints.",
+          "keywords": ["constraints", "regulatory", "hardware"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.constraints" }]
+        },
+        {
+          "id": "ieee830-sec-overall-assumptions",
+          "code": "SEC.Overall.AssumptionsDependencies",
+          "title": "Assumptions and dependencies",
+          "summary": "Assumptions, external dependencies, factors affecting scope.",
+          "keywords": ["assumptions", "dependencies"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.assumptions" }]
+        },
+
+        {
+          "id": "ieee830-sec-specific-ui",
+          "code": "SEC.Specific.ExternalInterfaces.UI",
+          "title": "User interfaces",
+          "summary": "UI standards, layout, navigation, accessibility.",
+          "keywords": ["UI", "UX", "accessibility"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.externalInterfaces.ui" }]
+        },
+        {
+          "id": "ieee830-sec-specific-hwif",
+          "code": "SEC.Specific.ExternalInterfaces.Hardware",
+          "title": "Hardware interfaces",
+          "summary": "Electrical, communication, and physical hardware interfaces.",
+          "keywords": ["hardware", "I/O", "devices"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.externalInterfaces.hardware" }]
+        },
+        {
+          "id": "ieee830-sec-specific-swif",
+          "code": "SEC.Specific.ExternalInterfaces.Software",
+          "title": "Software interfaces",
+          "summary": "APIs, operating systems, services, protocols.",
+          "keywords": ["API", "integration", "protocols"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.externalInterfaces.software" }]
+        },
+        {
+          "id": "ieee830-sec-specific-comms",
+          "code": "SEC.Specific.ExternalInterfaces.Communications",
+          "title": "Communications interfaces",
+          "summary": "Network protocols, ports, throughput, connectivity.",
+          "keywords": ["network", "ports", "protocols"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.externalInterfaces.communication" }]
+        },
+
+        {
+          "id": "ieee830-sec-specific-functions",
+          "code": "SEC.Specific.Functions",
+          "title": "Functional requirements",
+          "summary": "Detailed functional behavior organized by feature/use case.",
+          "keywords": ["functions", "use cases", "behavior"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.functions" }]
+        },
+        {
+          "id": "ieee830-sec-specific-performance",
+          "code": "SEC.Specific.Performance",
+          "title": "Performance requirements",
+          "summary": "Response time, throughput, capacity, workload profiles.",
+          "keywords": ["performance", "latency", "throughput"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.performance" }]
+        },
+        {
+          "id": "ieee830-sec-specific-db",
+          "code": "SEC.Specific.LogicalDatabase",
+          "title": "Logical database requirements",
+          "summary": "Data models, integrity rules, retention, backup/restore.",
+          "keywords": ["data model", "integrity", "retention"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.database" }]
+        },
+        {
+          "id": "ieee830-sec-specific-standards",
+          "code": "SEC.Specific.DesignConstraints.StandardsCompliance",
+          "title": "Design constraints — standards compliance",
+          "summary": "Required standards and regulations to comply with.",
+          "keywords": ["standards", "compliance", "regulations"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.designConstraints.standardsCompliance" }]
+        },
+
+        {
+          "id": "ieee830-sec-attr-reliability",
+          "code": "SEC.Specific.Attributes.Reliability",
+          "title": "Reliability",
+          "summary": "Failure rates, MTBF/MTTR, error handling, recovery.",
+          "keywords": ["reliability", "MTBF", "MTTR"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.reliability" }]
+        },
+        {
+          "id": "ieee830-sec-attr-availability",
+          "code": "SEC.Specific.Attributes.Availability",
+          "title": "Availability",
+          "summary": "Uptime targets, maintenance windows, failover.",
+          "keywords": ["availability", "uptime", "SLA"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.availability" }]
+        },
+        {
+          "id": "ieee830-sec-attr-security",
+          "code": "SEC.Specific.Attributes.Security",
+          "title": "Security",
+          "summary": "AuthN/AuthZ, confidentiality, integrity, audit, privacy.",
+          "keywords": ["security", "auth", "privacy"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.security" }]
+        },
+        {
+          "id": "ieee830-sec-attr-maintainability",
+          "code": "SEC.Specific.Attributes.Maintainability",
+          "title": "Maintainability",
+          "summary": "Modularity, diagnostics, configuration, logging.",
+          "keywords": ["maintainability", "modularity", "logging"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.maintainability" }]
+        },
+        {
+          "id": "ieee830-sec-attr-portability",
+          "code": "SEC.Specific.Attributes.Portability",
+          "title": "Portability",
+          "summary": "Supported platforms, dependencies, install/uninstall.",
+          "keywords": ["portability", "platforms", "install"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.portability" }]
+        },
+        {
+          "id": "ieee830-sec-attr-usability",
+          "code": "SEC.Specific.Attributes.Usability",
+          "title": "Usability",
+          "summary": "Learnability, operability, accessibility, UI guidelines.",
+          "keywords": ["usability", "learnability", "a11y"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.attributes.usability" }]
+        },
+        {
+          "id": "ieee830-sec-specific-other",
+          "code": "SEC.Specific.OtherRequirements",
+          "title": "Other requirements",
+          "summary": "Any additional requirements not covered elsewhere.",
+          "keywords": ["misc", "additional"],
+          "mapsTo": [{ "type": "srsSection", "value": "specific.other" }]
+        },
+
+        {
+          "id": "ieee830-sec-appendices",
+          "code": "SEC.Appendices",
+          "title": "Appendices",
+          "summary": "Supporting information: samples, analyses, prototypes.",
+          "keywords": ["appendix", "supporting info"],
+          "mapsTo": [{ "type": "srsSection", "value": "appendices" }]
+        },
+        {
+          "id": "ieee830-sec-index",
+          "code": "SEC.Index",
+          "title": "Index",
+          "summary": "Alphabetical index to aid navigation.",
+          "keywords": ["index", "navigation"],
+          "mapsTo": [{ "type": "srsSection", "value": "index" }]
+        },
+
+        {
+          "id": "ieee830-char-correct",
+          "code": "CHAR.Correct",
+          "title": "Correct",
+          "summary": "Every stated requirement reflects a real stakeholder need.",
+          "keywords": ["correct", "valid"],
+          "mapsTo": [{ "type": "qualityRule", "value": "correct" }]
+        },
+        {
+          "id": "ieee830-char-unambiguous",
+          "code": "CHAR.Unambiguous",
+          "title": "Unambiguous",
+          "summary": "Requirements are stated so that only one interpretation is possible.",
+          "keywords": ["clear", "single meaning"],
+          "mapsTo": [{ "type": "qualityRule", "value": "unambiguous" }]
+        },
+        {
+          "id": "ieee830-char-complete",
+          "code": "CHAR.Complete",
+          "title": "Complete",
+          "summary": "All significant requirements are included; all references resolved.",
+          "keywords": ["complete", "no gaps"],
+          "mapsTo": [{ "type": "qualityRule", "value": "complete" }]
+        },
+        {
+          "id": "ieee830-char-consistent",
+          "code": "CHAR.Consistent",
+          "title": "Consistent",
+          "summary": "No conflicting requirements; terminology used consistently.",
+          "keywords": ["consistent", "no conflicts"],
+          "mapsTo": [{ "type": "qualityRule", "value": "consistent" }]
+        },
+        {
+          "id": "ieee830-char-ranked",
+          "code": "CHAR.Ranked",
+          "title": "Ranked for importance and stability",
+          "summary": "Each requirement is prioritized and notes expected volatility.",
+          "keywords": ["priority", "stability", "MoSCoW"],
+          "mapsTo": [{ "type": "qualityRule", "value": "ranked" }]
+        },
+        {
+          "id": "ieee830-char-verifiable",
+          "code": "CHAR.Verifiable",
+          "title": "Verifiable",
+          "summary": "Requirements are stated so they can be verified by test, demo, inspection, or analysis.",
+          "keywords": ["verifiable", "testable"],
+          "mapsTo": [{ "type": "qualityRule", "value": "verifiable" }]
+        },
+        {
+          "id": "ieee830-char-modifiable",
+          "code": "CHAR.Modifiable",
+          "title": "Modifiable",
+          "summary": "SRS structure and notation support easy, consistent updates.",
+          "keywords": ["modifiable", "organized", "trace"],
+          "mapsTo": [{ "type": "qualityRule", "value": "modifiable" }]
+        },
+        {
+          "id": "ieee830-char-traceable",
+          "code": "CHAR.Traceable",
+          "title": "Traceable",
+          "summary": "Forward/backward links to sources, design, code, and tests.",
+          "keywords": ["traceability", "links", "coverage"],
+          "mapsTo": [{ "type": "qualityRule", "value": "traceable" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-26514",
+      "code": "ISO/IEC/IEEE 26514",
+      "title": "User documentation — Requirements for designers and developers",
+      "edition": "2022",
+      "url": "https://www.iso.org/",
+      "tags": ["user-docs", "documentation", "help", "usability"],
+      "clauses": [
+        {
+          "id": "26514-scope-conformance",
+          "code": "GEN.ScopeConformance",
+          "title": "Scope and conformance",
+          "summary": "Define what documentation products are in scope and the criteria for conformance.",
+          "keywords": ["scope", "conformance"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation" }]
+        },
+        {
+          "id": "26514-doc-plan",
+          "code": "PLAN.DocPlan",
+          "title": "Documentation plan",
+          "summary": "Plan audience, deliverables, schedule, roles, and tools for user documentation.",
+          "keywords": ["planning", "roles", "schedule"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.documentation" }]
+        },
+        {
+          "id": "26514-dps",
+          "code": "PLAN.DPS",
+          "title": "Documentation product specification (DPS)",
+          "summary": "Specify goals, audiences, media, structure, acceptance criteria, and risks.",
+          "keywords": ["DPS", "specification"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.documentation" }]
+        },
+        {
+          "id": "26514-audience",
+          "code": "INFO.Audience",
+          "title": "Audience and usage profiles",
+          "summary": "Describe user classes, skills, environments, and usage scenarios.",
+          "keywords": ["audience", "personas", "environment"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.userCharacteristics" },
+            { "type": "srsSection", "value": "supportingInformation.userDocumentation.audience" }
+          ]
+        },
+        {
+          "id": "26514-prereqs",
+          "code": "INFO.Prerequisites",
+          "title": "Assumptions and prerequisites",
+          "summary": "State required knowledge, accounts, privileges, and system prerequisites.",
+          "keywords": ["assumptions", "prerequisites"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.assumptions" }]
+        },
+        {
+          "id": "26514-terminology",
+          "code": "STYLE.Terminology",
+          "title": "Terminology and glossary",
+          "summary": "Use consistent terms; provide a glossary and acronym list.",
+          "keywords": ["glossary", "consistency"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "intro.definitions" },
+            { "type": "qualityRule", "value": "consistent" },
+            { "type": "qualityRule", "value": "unambiguous" }
+          ]
+        },
+        {
+          "id": "26514-conventions",
+          "code": "STYLE.Conventions",
+          "title": "Notation and conventions",
+          "summary": "Define typographic, path, keyboard, and UI-label conventions.",
+          "keywords": ["notation", "keyboard", "UI labels"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.conventions" }]
+        },
+        {
+          "id": "26514-structure",
+          "code": "ORG.InformationModel",
+          "title": "Information structure",
+          "summary": "Organize content into concept, task, and reference topics.",
+          "keywords": ["topic", "DITA-like", "structure"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.structure" }]
+        },
+        {
+          "id": "26514-front-matter",
+          "code": "ORG.FrontMatter",
+          "title": "Front matter",
+          "summary": "Title page, edition, date, authorship, abstract, and legal notices.",
+          "keywords": ["front matter", "legal"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.frontMatter" }]
+        },
+        {
+          "id": "26514-introduction",
+          "code": "ORG.Introduction",
+          "title": "Introduction",
+          "summary": "Purpose, scope, document organization, and how to use this guide.",
+          "keywords": ["purpose", "overview"],
+          "mapsTo": [{ "type": "srsSection", "value": "intro.overview" }]
+        },
+        {
+          "id": "26514-concepts",
+          "code": "TOPIC.Concepts",
+          "title": "Concept topics",
+          "summary": "Explain core concepts, models, and mental frameworks.",
+          "keywords": ["concepts", "models"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.concepts" }]
+        },
+        {
+          "id": "26514-procedures",
+          "code": "TOPIC.Procedures",
+          "title": "Procedure topics",
+          "summary": "Step-by-step tasks with prerequisites, steps, and expected results.",
+          "keywords": ["procedures", "tasks"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.procedures" }]
+        },
+        {
+          "id": "26514-examples",
+          "code": "TOPIC.Examples",
+          "title": "Examples and samples",
+          "summary": "Provide realistic examples, snippets, and sample data.",
+          "keywords": ["examples", "samples"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.examples" }]
+        },
+        {
+          "id": "26514-reference",
+          "code": "TOPIC.Reference",
+          "title": "Reference topics",
+          "summary": "Command/option tables, parameters, limits, and defaults.",
+          "keywords": ["reference", "parameters"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.reference" }]
+        },
+        {
+          "id": "26514-quickstart",
+          "code": "TOPIC.QuickStart",
+          "title": "Quick start",
+          "summary": "Minimal steps to first success, with pointers to deeper topics.",
+          "keywords": ["quick start", "onboarding"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.quickStart" }]
+        },
+        {
+          "id": "26514-tutorials",
+          "code": "TOPIC.Tutorials",
+          "title": "Tutorials",
+          "summary": "Guided, progressive exercises with checkpoints and outcomes.",
+          "keywords": ["tutorials", "learning"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.tutorials" }]
+        },
+        {
+          "id": "26514-installation",
+          "code": "TOPIC.Installation",
+          "title": "Installation",
+          "summary": "Install/uninstall, upgrade, prerequisites, and rollback instructions.",
+          "keywords": ["install", "upgrade", "rollback"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.installation" }]
+        },
+        {
+          "id": "26514-configuration",
+          "code": "TOPIC.Configuration",
+          "title": "Configuration and setup",
+          "summary": "Initial setup, configuration options, defaults, and profiles.",
+          "keywords": ["configuration", "setup"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.configuration" }]
+        },
+        {
+          "id": "26514-customization",
+          "code": "TOPIC.Customization",
+          "title": "Customization",
+          "summary": "Supported customizations, constraints, and safe extension points.",
+          "keywords": ["customization", "extensions"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.customization" }]
+        },
+        {
+          "id": "26514-troubleshooting",
+          "code": "TOPIC.Troubleshooting",
+          "title": "Troubleshooting",
+          "summary": "Symptom–cause–resolution tables and diagnostic procedures.",
+          "keywords": ["troubleshooting", "diagnostics"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.troubleshooting" }]
+        },
+        {
+          "id": "26514-error-messages",
+          "code": "TOPIC.ErrorMessages",
+          "title": "Error and status messages",
+          "summary": "Explain messages, causes, and corrective actions.",
+          "keywords": ["errors", "messages"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.errorMessages" }]
+        },
+        {
+          "id": "26514-recovery",
+          "code": "TOPIC.Recovery",
+          "title": "Recovery and backup",
+          "summary": "Backup/restore procedures and data-recovery guidance.",
+          "keywords": ["recovery", "backup"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.recovery" }]
+        },
+        {
+          "id": "26514-safety",
+          "code": "TOPIC.SafetyNotices",
+          "title": "Safety and hazard notices",
+          "summary": "Warnings, cautions, and notices with standardized signal words.",
+          "keywords": ["safety", "warnings", "hazard"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "supportingInformation.userDocumentation.safety" }
+          ]
+        },
+        {
+          "id": "26514-accessibility",
+          "code": "STYLE.Accessibility",
+          "title": "Accessibility",
+          "summary": "Provide accessible content (headings, alt text, keyboard paths).",
+          "keywords": ["accessibility", "a11y"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.usability" },
+            { "type": "qualityRule", "value": "accessible" }
+          ]
+        },
+        {
+          "id": "26514-graphics",
+          "code": "PRESENT.Graphics",
+          "title": "Graphics and diagrams",
+          "summary": "Use legible graphics with captions, references, and callouts.",
+          "keywords": ["graphics", "diagrams"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.media" }]
+        },
+        {
+          "id": "26514-screenshots",
+          "code": "PRESENT.Screenshots",
+          "title": "Screenshots",
+          "summary": "Annotate screenshots; keep them current with UI versions.",
+          "keywords": ["screenshots", "ui"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.media" }]
+        },
+        {
+          "id": "26514-ui-labels",
+          "code": "PRESENT.UILabels",
+          "title": "UI labels and references",
+          "summary": "Match UI text exactly; avoid ambiguous naming.",
+          "keywords": ["UI labels", "consistency"],
+          "mapsTo": [{ "type": "qualityRule", "value": "consistent" }]
+        },
+        {
+          "id": "26514-localization",
+          "code": "PRESENT.Localization",
+          "title": "Localization support",
+          "summary": "Externalize strings, avoid culture-specific idioms, and format-sensitive examples.",
+          "keywords": ["localization", "i18n"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.localization" }]
+        },
+        {
+          "id": "26514-navigation",
+          "code": "NAV.Navigation",
+          "title": "Navigation model",
+          "summary": "Provide clear navigation paths, breadcrumbs, and related links.",
+          "keywords": ["navigation", "breadcrumbs"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.navigation" }]
+        },
+        {
+          "id": "26514-toc",
+          "code": "NAV.TableOfContents",
+          "title": "Table of contents",
+          "summary": "Top-level ToC with scannable titles reflecting topic structure.",
+          "keywords": ["ToC"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.toc" }]
+        },
+        {
+          "id": "26514-index",
+          "code": "NAV.Index",
+          "title": "Index",
+          "summary": "Back-of-book style index or index keys for online help.",
+          "keywords": ["index"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.index" }]
+        },
+        {
+          "id": "26514-search",
+          "code": "NAV.Search",
+          "title": "Search",
+          "summary": "Full-text search with synonyms and scoped filters.",
+          "keywords": ["search"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.search" }]
+        },
+        {
+          "id": "26514-crossrefs",
+          "code": "NAV.CrossReferences",
+          "title": "Cross-references",
+          "summary": "Stable cross-links between related topics and versions.",
+          "keywords": ["cross-reference", "links"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.navigation" }]
+        },
+        {
+          "id": "26514-context-help",
+          "code": "NAV.ContextSensitiveHelp",
+          "title": "Context-sensitive help",
+          "summary": "Hook UI elements to relevant help topics and anchors.",
+          "keywords": ["context help", "F1 help"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.contextHelp" }]
+        },
+        {
+          "id": "26514-release-notes",
+          "code": "LIFE.ReleaseNotes",
+          "title": "Release notes",
+          "summary": "Summarize changes, new features, fixes, and known issues.",
+          "keywords": ["release notes", "changes"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.releaseNotes" }]
+        },
+        {
+          "id": "26514-revision-history",
+          "code": "LIFE.RevisionHistory",
+          "title": "Revision history",
+          "summary": "Track document versions, dates, authors, and changes.",
+          "keywords": ["revision history", "versioning"],
+          "mapsTo": [{ "type": "srsSection", "value": "managementAndChangeControl" }]
+        },
+        {
+          "id": "26514-acceptance",
+          "code": "QA.Acceptance",
+          "title": "Documentation acceptance criteria",
+          "summary": "Define review gates and measurable acceptance criteria.",
+          "keywords": ["acceptance", "criteria"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "verificationAndValidation.documentationReview" },
+            { "type": "qualityRule", "value": "verifiable" }
+          ]
+        },
+        {
+          "id": "26514-usability-review",
+          "code": "QA.UsabilityReview",
+          "title": "Usability review/testing",
+          "summary": "Evaluate clarity, findability, and task success with target users.",
+          "keywords": ["usability", "testing"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.validation" }]
+        },
+        {
+          "id": "26514-legal",
+          "code": "LEGAL.Notices",
+          "title": "Legal and licensing notices",
+          "summary": "Copyright, trademarks, licenses, and third-party acknowledgements.",
+          "keywords": ["legal", "licenses"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.legal" }]
+        },
+        {
+          "id": "26514-privacy",
+          "code": "LEGAL.Privacy",
+          "title": "Privacy and data handling",
+          "summary": "State data collection, retention, and user-controls (links to policy).",
+          "keywords": ["privacy", "data"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.constraints" }]
+        },
+        {
+          "id": "26514-delivery",
+          "code": "DELIVERY.Channels",
+          "title": "Delivery channels and formats",
+          "summary": "Print/PDF, web help, in-app help; responsive layout and offline access.",
+          "keywords": ["delivery", "formats", "offline"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.delivery" }]
+        },
+        {
+          "id": "26514-metadata",
+          "code": "DELIVERY.Metadata",
+          "title": "Metadata",
+          "summary": "Topic IDs, version, language, audience, and platform metadata.",
+          "keywords": ["metadata", "topic IDs"],
+          "mapsTo": [{ "type": "srsSection", "value": "supportingInformation.userDocumentation.metadata" }]
+        }
+      ]
+    },
+    {
+      "id": "iec-61508",
+      "code": "IEC 61508",
+      "title": "Functional safety of electrical/electronic/programmable electronic safety-related systems",
+      "edition": "2010",
+      "url": "https://www.iec.ch/",
+      "tags": ["safety", "functional-safety", "energy", "industry"],
+      "clauses": [
+        {
+          "id": "61508-safety-lifecycle",
+          "code": "FS.Lifecycle",
+          "title": "Safety lifecycle & SIL",
+          "summary": "Define safety lifecycle, target SIL, and allocation of safety requirements to software.",
+          "keywords": ["SIL", "lifecycle", "allocation"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "planningAndProcess.lifecycle" },
+            { "type": "qualityRule", "value": "traceable" }
+          ]
+        },
+        {
+          "id": "61508-sw-dev",
+          "code": "FS.SWDevelopment",
+          "title": "Software development for safety functions",
+          "summary": "Define methods, coding standards, static analysis, and independence per target SIL.",
+          "keywords": ["coding standards", "static analysis", "independence"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.reliability" },
+            { "type": "srsSection", "value": "verificationAndValidation.verification" }
+          ]
+        },
+        {
+          "id": "61508-config-change",
+          "code": "FS.ConfigurationChange",
+          "title": "Configuration & change control",
+          "summary": "Configuration management, impact analysis, and controlled change for safety items.",
+          "keywords": ["configuration", "change control"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "managementAndChangeControl" },
+            { "type": "qualityRule", "value": "traceable" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iec-62351",
+      "code": "IEC 62351",
+      "title": "Power systems management and associated information exchange — Data and communications security",
+      "edition": "2018",
+      "url": "https://www.iec.ch/",
+      "tags": ["energy", "security", "scada", "ics"],
+      "clauses": [
+        {
+          "id": "62351-comm-sec",
+          "code": "SEC.Communications",
+          "title": "Secure communications for power protocols",
+          "summary": "Protect MMS/IEC 61850/ICCP/DER communications: auth, integrity, confidentiality.",
+          "keywords": ["TLS", "RBAC", "MMS", "61850"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        },
+        {
+          "id": "62351-roles-logging",
+          "code": "SEC.RolesLogging",
+          "title": "Roles, logging, and key management",
+          "summary": "Role-based access, secure key lifecycle, audit trails for control systems.",
+          "keywords": ["RBAC", "audit", "keys"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "srsSection", "value": "operations.monitoring" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-27019",
+      "code": "ISO/IEC 27019",
+      "title": "Information security controls for energy utility industry",
+      "edition": "2017",
+      "url": "https://www.iso.org/",
+      "tags": ["energy", "security", "ics"],
+      "clauses": [
+        {
+          "id": "27019-segmentation",
+          "code": "SEC.SegmentationRemote",
+          "title": "Network segmentation & remote access",
+          "summary": "Zoning/segmentation for ICS and secure remote access to control networks.",
+          "keywords": ["segmentation", "remote access", "zones"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        },
+        {
+          "id": "27019-change-ops",
+          "code": "SEC.ChangeOps",
+          "title": "Secure operations & change",
+          "summary": "Hardening baselines, patching, controlled change for operational systems.",
+          "keywords": ["hardening", "patching"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "managementAndChangeControl" },
+            { "type": "srsSection", "value": "operations.monitoring" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-20022",
+      "code": "ISO 20022",
+      "title": "Financial services — Universal financial industry message scheme",
+      "edition": "2013",
+      "url": "https://www.iso20022.org/",
+      "tags": ["finance", "messaging", "payments"],
+      "clauses": [
+        {
+          "id": "20022-models",
+          "code": "IF.ModelSchema",
+          "title": "Business models & message schemas",
+          "summary": "Conform to canonical business components and message schemas.",
+          "keywords": ["schema", "UML", "dictionary"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "interfaces.apiContracts" },
+            { "type": "srsSection", "value": "dataModeling" }
+          ]
+        },
+        {
+          "id": "20022-versioning",
+          "code": "IF.Versioning",
+          "title": "Versioning & compatibility",
+          "summary": "Manage message versions and backward compatibility strategy.",
+          "keywords": ["versioning", "compatibility"],
+          "mapsTo": [{ "type": "srsSection", "value": "managementAndChangeControl" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-8583",
+      "code": "ISO 8583",
+      "title": "Financial transaction card originated messages",
+      "edition": "2003",
+      "url": "https://www.iso.org/",
+      "tags": ["finance", "cards", "payments"],
+      "clauses": [
+        {
+          "id": "8583-structure",
+          "code": "IF.MessageStructure",
+          "title": "Message structure & MTIs",
+          "summary": "Define MTIs, bitmaps, fields; validate data elements.",
+          "keywords": ["MTI", "bitmap", "DE"],
+          "mapsTo": [{ "type": "srsSection", "value": "interfaces.protocols" }]
+        },
+        {
+          "id": "8583-errors",
+          "code": "IF.ErrorCodes",
+          "title": "Response codes & error handling",
+          "summary": "Map response codes to business outcomes and retries.",
+          "keywords": ["ISO codes", "errors"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.reliability" }]
+        }
+      ]
+    },
+    {
+      "id": "iec-62304",
+      "code": "IEC 62304",
+      "title": "Medical device software — Software life cycle processes",
+      "edition": "2006+A1:2015",
+      "url": "https://www.iec.ch/",
+      "tags": ["medical", "lifecycle", "safety"],
+      "clauses": [
+        {
+          "id": "62304-classification",
+          "code": "MD.Classification",
+          "title": "Software safety classification",
+          "summary": "Classify software items and apply process rigor by class.",
+          "keywords": ["Class A/B/C", "safety"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "planningAndProcess.lifecycle" }
+          ]
+        },
+        {
+          "id": "62304-software-reqs",
+          "code": "MD.SoftwareRequirements",
+          "title": "Software requirements & traceability",
+          "summary": "Specify testable software requirements and maintain bidirectional traceability.",
+          "keywords": ["traceability", "testable"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "functionalRequirements" },
+            { "type": "qualityRule", "value": "verifiable" },
+            { "type": "qualityRule", "value": "traceable" }
+          ]
+        },
+        {
+          "id": "62304-soup",
+          "code": "MD.SOUP",
+          "title": "Software of unknown provenance (SOUP)",
+          "summary": "Identify SOUP, assess risks, monitor updates, define controls.",
+          "keywords": ["SOUP", "third-party"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "riskManagement" }
+          ]
+        },
+        {
+          "id": "62304-verification",
+          "code": "MD.VandV",
+          "title": "Verification & integration testing",
+          "summary": "Plan and perform unit/integration verification with independence where required.",
+          "keywords": ["unit", "integration", "independence"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.verification" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-14971",
+      "code": "ISO 14971",
+      "title": "Medical devices — Application of risk management to medical devices",
+      "edition": "2019",
+      "url": "https://www.iso.org/",
+      "tags": ["medical", "risk", "safety"],
+      "clauses": [
+        {
+          "id": "14971-process",
+          "code": "RM.Process",
+          "title": "Risk management process",
+          "summary": "Plan risk management, define roles, criteria, and documentation.",
+          "keywords": ["risk plan", "criteria"],
+          "mapsTo": [{ "type": "srsSection", "value": "riskManagement" }]
+        },
+        {
+          "id": "14971-analysis",
+          "code": "RM.AnalysisControl",
+          "title": "Hazard analysis & risk control",
+          "summary": "Identify hazards, estimate risks, implement and verify controls.",
+          "keywords": ["hazard", "controls", "verification"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "verificationAndValidation.verification" }
+          ]
+        },
+        {
+          "id": "14971-residual",
+          "code": "RM.ResidualBenefit",
+          "title": "Residual risk & risk–benefit",
+          "summary": "Evaluate residual risks and document risk–benefit justification.",
+          "keywords": ["residual risk", "benefit"],
+          "mapsTo": [{ "type": "srsSection", "value": "riskManagement" }]
+        }
+      ]
+    },
+    {
+      "id": "iec-62366-1",
+      "code": "IEC 62366-1",
+      "title": "Application of usability engineering to medical devices",
+      "edition": "2015",
+      "url": "https://www.iec.ch/",
+      "tags": ["medical", "usability", "human-factors"],
+      "clauses": [
+        {
+          "id": "62366-user-spec",
+          "code": "UE.UserInterfaceSpec",
+          "title": "User interface specification",
+          "summary": "Define user profiles, use environments, UI characteristics, and hazards.",
+          "keywords": ["personas", "environment", "UI"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.userCharacteristics" },
+            { "type": "srsSection", "value": "nonFunctionalRequirements.usability" }
+          ]
+        },
+        {
+          "id": "62366-validation",
+          "code": "UE.Validation",
+          "title": "Usability validation",
+          "summary": "Summative evaluation of UI for safety-related use scenarios.",
+          "keywords": ["validation", "use errors"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.validation" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-15408",
+      "code": "ISO/IEC 15408 (Common Criteria)",
+      "title": "Evaluation criteria for IT security",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["defense", "security", "assurance"],
+      "clauses": [
+        {
+          "id": "15408-eal",
+          "code": "SEC.EAL",
+          "title": "Evaluation Assurance Levels",
+          "summary": "Define target EAL and evidence required (design, testing, vulnerability assessment).",
+          "keywords": ["EAL", "assurance", "evidence"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "srsSection", "value": "verificationAndValidation.verification" }
+          ]
+        },
+        {
+          "id": "15408-toe-scope",
+          "code": "SEC.TOE",
+          "title": "TOE scope & Security Objectives",
+          "summary": "Identify the TOE boundary, assets, threats, assumptions, and security objectives.",
+          "keywords": ["TOE", "threats", "objectives"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.scope" },
+            { "type": "srsSection", "value": "riskManagement" }
+          ]
+        },
+        {
+          "id": "15408-sfr",
+          "code": "SEC.SFR",
+          "title": "Security Functional Requirements",
+          "summary": "Specify SFRs (e.g., access control, audit, crypto, user data protection) mapped to threats.",
+          "keywords": ["SFR", "access control", "audit"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-18045",
+      "code": "ISO/IEC 18045",
+      "title": "Common Methodology for IT Security Evaluation (CEM)",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["defense", "security", "testing"],
+      "clauses": [
+        {
+          "id": "18045-test-methods",
+          "code": "SEC.Testing",
+          "title": "Security testing methodology",
+          "summary": "Plan evaluator tests, sample selection, coverage, and independent confirmation of developer tests.",
+          "keywords": ["testing", "coverage", "independence"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.verification" }]
+        },
+        {
+          "id": "18045-vuln-analysis",
+          "code": "SEC.Vulnerability",
+          "title": "Vulnerability analysis",
+          "summary": "Define approach for public/known vulnerabilities search and penetration attempts.",
+          "keywords": ["vulnerability", "penetration"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-19790",
+      "code": "ISO/IEC 19790",
+      "title": "Security requirements for cryptographic modules",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["defense", "crypto", "security"],
+      "clauses": [
+        {
+          "id": "19790-roles-services",
+          "code": "CRYPTO.RolesServices",
+          "title": "Roles, services, and authentication",
+          "summary": "Define roles, approved services, and authentication strength for crypto modules.",
+          "keywords": ["roles", "services", "authentication"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.security" }]
+        },
+        {
+          "id": "19790-keys",
+          "code": "CRYPTO.KeyManagement",
+          "title": "Key lifecycle & protection",
+          "summary": "Key generation, entry/output, storage, distribution, and destruction controls.",
+          "keywords": ["key management", "KMS", "lifecycle"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "srsSection", "value": "operations.monitoring" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-24759",
+      "code": "ISO/IEC 24759",
+      "title": "Test requirements for cryptographic modules",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["defense", "crypto", "testing"],
+      "clauses": [
+        {
+          "id": "24759-self-tests",
+          "code": "CRYPTO.SelfTests",
+          "title": "Power-up/conditional self-tests",
+          "summary": "Define required self-tests and error handling for cryptographic modules.",
+          "keywords": ["self-test", "integrity", "error handling"],
+          "mapsTo": [{ "type": "srsSection", "value": "verificationAndValidation.verification" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-20243",
+      "code": "ISO/IEC 20243 (OTTPS)",
+      "title": "Open Trusted Technology Provider™ Standard — Mitigating maliciously tainted and counterfeit products",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["defense", "supply-chain", "assurance"],
+      "clauses": [
+        {
+          "id": "20243-supply-chain",
+          "code": "SCM.Assurance",
+          "title": "Supply-chain assurance controls",
+          "summary": "Supplier integrity, secure development/handling, provenance, and anti-tamper controls.",
+          "keywords": ["supply chain", "counterfeit", "tamper"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.constraints" },
+            { "type": "srsSection", "value": "planningAndProcess.lifecycle" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-19788",
+      "code": "ISO/IEC 19788 (MLR)",
+      "title": "Metadata for Learning Resources",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["education", "metadata", "learning-resources"],
+      "clauses": [
+        {
+          "id": "19788-core",
+          "code": "MLR.Core",
+          "title": "Core learning metadata",
+          "summary": "Provide discoverable metadata (title, description, keywords, language, coverage).",
+          "keywords": ["metadata", "discoverability"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "dataModeling" },
+            { "type": "srsSection", "value": "interfaces.apiContracts" }
+          ]
+        },
+        {
+          "id": "19788-edu-level",
+          "code": "MLR.EducationLevel",
+          "title": "Educational level & intended audience",
+          "summary": "Indicate age/level, prerequisites, and target roles for learning resources.",
+          "keywords": ["audience", "level", "prerequisites"],
+          "mapsTo": [{ "type": "srsSection", "value": "overall.userCharacteristics" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-12785",
+      "code": "ISO/IEC 12785",
+      "title": "Content Packaging for Learning, Education and Training",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["education", "packaging", "interoperability"],
+      "clauses": [
+        {
+          "id": "12785-manifest",
+          "code": "CP.Manifest",
+          "title": "Package manifest & resources",
+          "summary": "Represent courses as packages with a manifest, organizations, and resource references.",
+          "keywords": ["manifest", "package", "resources"],
+          "mapsTo": [{ "type": "srsSection", "value": "interfaces.fileFormats" }]
+        },
+        {
+          "id": "12785-navigation",
+          "code": "CP.Navigation",
+          "title": "Sequencing & navigation",
+          "summary": "Define learning object sequencing, dependencies, and simple navigation rules.",
+          "keywords": ["sequencing", "dependencies"],
+          "mapsTo": [{ "type": "srsSection", "value": "functionalRequirements" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-23988",
+      "code": "ISO/IEC 23988",
+      "title": "Code of practice for the use of IT in the delivery of assessments",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["education", "assessment", "security", "proctoring"],
+      "clauses": [
+        {
+          "id": "23988-security",
+          "code": "EXAM.Security",
+          "title": "Assessment security & integrity",
+          "summary": "Identity verification, session security, item bank protection, and anti-cheating controls.",
+          "keywords": ["proctoring", "item bank", "identity"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "nonFunctionalRequirements.security" },
+            { "type": "srsSection", "value": "functionalRequirements" }
+          ]
+        },
+        {
+          "id": "23988-accessibility",
+          "code": "EXAM.Accessibility",
+          "title": "Equity and accessibility",
+          "summary": "Reasonable adjustments, assistive technologies, and accessible formats for candidates.",
+          "keywords": ["accessibility", "equity"],
+          "mapsTo": [{ "type": "srsSection", "value": "nonFunctionalRequirements.usability" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-iec-40180",
+      "code": "ISO/IEC 40180",
+      "title": "Quality for learning, education and training — Guidance",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["education", "quality", "process"],
+      "clauses": [
+        {
+          "id": "40180-qm",
+          "code": "QMS.LearningQuality",
+          "title": "Learning quality management",
+          "summary": "Define objectives, indicators, monitoring and continuous improvement for learning services.",
+          "keywords": ["quality", "KPIs", "improvement"],
+          "mapsTo": [{ "type": "srsSection", "value": "planningAndProcess.lifecycle" }]
+        }
+      ]
+    },
+    {
+      "id": "iso-21001",
+      "code": "ISO 21001",
+      "title": "Educational organizations — Management systems for educational organizations (EOMS)",
+      "edition": "latest",
+      "url": "https://www.iso.org/",
+      "tags": ["education", "management-system"],
+      "clauses": [
+        {
+          "id": "21001-stakeholders",
+          "code": "EOMS.Stakeholders",
+          "title": "Learner and stakeholder requirements",
+          "summary": "Identify learner needs, stakeholder requirements, and measurable learning outcomes.",
+          "keywords": ["stakeholders", "outcomes"],
+          "mapsTo": [
+            { "type": "srsSection", "value": "overall.userCharacteristics" },
+            { "type": "srsSection", "value": "planningAndProcess.lifecycle" }
           ]
         }
       ]

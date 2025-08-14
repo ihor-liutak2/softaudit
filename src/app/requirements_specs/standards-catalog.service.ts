@@ -66,4 +66,18 @@ export class StandardsCatalogService {
       note: clause.title,     // human-friendly title for display
     };
   }
+
+  // Get a standard by its id using the public list
+  standardById(id?: string) {
+    if (!id) return undefined;
+    return this.standards().find(s => s.id === id);
+  }
+
+  // Get a clause by standard id + clause id using the public helper
+  clauseById(stdId?: string, clauseId?: string) {
+    if (!stdId || !clauseId) return undefined;
+    const clauses = this.clausesOf(stdId);
+    return clauses.find((c: { id: string }) => c.id === clauseId);
+  }
+
 }

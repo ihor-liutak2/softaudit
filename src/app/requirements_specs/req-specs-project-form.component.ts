@@ -1,10 +1,11 @@
 // src/app/requirements_specs/req-specs-project-form.component.ts
-import { Component, EventEmitter, Input, Output, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { ReqSpecsProject, UserRef } from './req-specs.types';
+import { ReqSpecsProject, StandardRef, UserRef } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
+import { StandardsCatalogService } from './standards-catalog.service';
 
 type StakeholderRow = { name: string; role?: string; contact?: string };
 type Status = ReqSpecsProject['status'];
@@ -15,7 +16,6 @@ type Status = ReqSpecsProject['status'];
   imports: [CommonModule, FormsModule],
   template: `
     <form (ngSubmit)="submit()" class="p-4 border rounded bg-light">
-
       <!-- Basic -->
       <div class="row g-3">
         <div class="col-md-6">
@@ -87,13 +87,13 @@ type Status = ReqSpecsProject['status'];
               </tr>
             </thead>
             <tbody>
-              @for (row of stakeholders(); track $index) {
+              @for (row of stakeholders(); track $index; let i = $index) {
                 <tr>
-                  <td><input class="form-control" [(ngModel)]="row.name" name="sh_name_{{ $index }}" /></td>
-                  <td><input class="form-control" [(ngModel)]="row.role" name="sh_role_{{ $index }}" /></td>
-                  <td><input class="form-control" [(ngModel)]="row.contact" name="sh_contact_{{ $index }}" /></td>
+                  <td><input class="form-control" [(ngModel)]="row.name" [name]="'sh_name_' + i" /></td>
+                  <td><input class="form-control" [(ngModel)]="row.role" [name]="'sh_role_' + i" /></td>
+                  <td><input class="form-control" [(ngModel)]="row.contact" [name]="'sh_contact_' + i" /></td>
                   <td class="text-end">
-                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeStakeholder($index)">
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeStakeholder(i)">
                       <i class="bi bi-x-lg"></i>
                     </button>
                   </td>
@@ -128,6 +128,86 @@ type Status = ReqSpecsProject['status'];
         </div>
       </div>
 
+      <!-- Project standards (manual list) -->
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <label class="form-label mb-0">Project standards</label>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="projectStandards.push({ code: '' })">
+            Add
+          </button>
+        </div>
+
+        @if (projectStandards.length === 0) {
+          <div class="form-text">No standards added.</div>
+        }
+
+        @for (s of projectStandards; track $index; let i = $index) {
+          <div class="border rounded p-2 mt-2">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <input class="form-control"
+                       [(ngModel)]="s.code"
+                       [name]="'pstd_code_' + i"
+                       placeholder="Code (e.g., ISO/IEC 25010)" />
+              </div>
+              <div class="col-md-4">
+                <input class="form-control"
+                       [(ngModel)]="s.clause"
+                       [name]="'pstd_clause_' + i"
+                       placeholder="Clause (e.g., PE.TimeBehavior)" />
+              </div>
+              <div class="col-md-3">
+                <input class="form-control"
+                       [(ngModel)]="s.note"
+                       [name]="'pstd_note_' + i"
+                       placeholder="Note" />
+              </div>
+              <div class="col-md-1 d-grid">
+                <button type="button" class="btn btn-outline-danger" (click)="removeProjectStd(i)">&times;</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Catalog picker (helper; visually narrower/indented) -->
+      <div class="ps-3 ms-1 border-start border-2 mb-3">
+        <label class="form-label">Standards (catalog)</label>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-5">
+            <select class="form-select"
+                    [(ngModel)]="selStdId"
+                    [ngModelOptions]="{standalone: true}">
+              <option [ngValue]="undefined">— choose standard —</option>
+              @for (s of catalog.standards(); track s.id) {
+                <option [value]="s.id">{{ s.code }} — {{ s.title }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-5">
+            <select class="form-select"
+                    [(ngModel)]="selClauseId"
+                    [ngModelOptions]="{standalone: true}"
+                    [disabled]="!selStdId">
+              <option [ngValue]="undefined">— choose clause —</option>
+              @for (c of catalog.clausesOf(selStdId!); track c.id) {
+                <option [value]="c.id">{{ c.code }} — {{ c.title }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="col-md-2 d-grid">
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    [disabled]="!selStdId || !selClauseId"
+                    (click)="addProjectStdFromCatalog()">
+              Add
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- System info -->
       <div class="mt-4 small text-muted">
         <div>Created by: {{ createdByLabel() }}</div>
@@ -158,7 +238,7 @@ export class ReqSpecsProjectFormComponent {
   companyId: string = '';
   sectorId: string = '';
   status: Status = 'draft';
-  deadlineAt: string = ''; // ISO date (yyyy-mm-dd) for <input type="date">
+  deadlineAt: string = ''; // yyyy-mm-dd for <input type="date">
 
   createdAt = '';
   updatedAt = '';
@@ -167,8 +247,17 @@ export class ReqSpecsProjectFormComponent {
   tagInput = '';
   tags = signal<string[]>([]);
 
+  // Project-level standards edited in this form
+  projectStandards: StandardRef[] = [];
+
+  // Catalog helper selections (NOT part of form)
+  selStdId?: string;
+  selClauseId?: string;
+
+  constructor(public catalog: StandardsCatalogService) {}
+
   // Initialize from model
-  ngOnInit() {
+  async ngOnInit() {
     const m = this.model ?? {};
 
     this.id = m.id ?? '';
@@ -187,6 +276,12 @@ export class ReqSpecsProjectFormComponent {
     );
 
     this.tags.set([...(m.tags ?? [])]);
+
+    // Initialize local standards array from model
+    this.projectStandards = [...(m.standards ?? [])];
+
+    // Load catalog once
+    await this.catalog.load();
   }
 
   // Basic validation (required: name, status)
@@ -218,12 +313,11 @@ export class ReqSpecsProjectFormComponent {
       companyId: this.companyId || undefined,
       sectorId: this.sectorId || undefined,
       stakeholders: sh.length ? sh : undefined,
-      // standards are not edited in this form for now; leave as-is from model if present
-      standards: (this.model?.standards && this.model!.standards!.length) ? this.model!.standards : undefined,
+      standards: this.projectStandards.length ? this.projectStandards : undefined,
       tags: this.tags().length ? this.tags() : undefined,
       status: this.status,
       deadlineAt: this.deadlineAt ? this.fromDateInput(this.deadlineAt) : undefined,
-      createdBy: this.model?.createdBy ?? this.createdBy!, // parent should pass createdBy
+      createdBy: this.model?.createdBy ?? this.createdBy ?? { uid: 'unknown' },
       createdAt: this.model?.createdAt ?? this.createdAt ?? nowIso,
       updatedAt: nowIso
     });
@@ -231,7 +325,7 @@ export class ReqSpecsProjectFormComponent {
     this.save.emit(payload);
   }
 
-  /** Add/remove stakeholders */
+  /** Stakeholders */
   addStakeholder() {
     this.stakeholders.update(list => [...list, { name: '', role: '', contact: '' }]);
   }
@@ -239,7 +333,7 @@ export class ReqSpecsProjectFormComponent {
     this.stakeholders.update(list => list.filter((_, idx) => idx !== i));
   }
 
-  /** Add/remove tags */
+  /** Tags */
   addTag() {
     const t = (this.tagInput || '').trim();
     if (!t) return;
@@ -271,7 +365,7 @@ export class ReqSpecsProjectFormComponent {
     return out as T;
   }
 
-  // Convert ISO date string → input[type=date] value (yyyy-mm-dd)
+  // Convert ISO date string → input[type=date] (yyyy-mm-dd)
   private toDateInput(iso: string): string {
     try {
       const d = new Date(iso);
@@ -285,11 +379,35 @@ export class ReqSpecsProjectFormComponent {
     }
   }
 
-  // Convert input[type=date] value → ISO (yyyy-mm-dd -> yyyy-mm-ddT00:00:00.000Z)
+  // Convert input[type=date] → ISO
   private fromDateInput(val: string): string {
     if (!val) return '';
-    // Interpret as UTC midnight to be stable
     return new Date(`${val}T00:00:00.000Z`).toISOString();
-    // If you prefer local date start, use new Date(val).toISOString()
+  }
+
+  /** Add selected clause from catalog into project's standards */
+  addProjectStdFromCatalog(): void {
+    if (!this.selStdId || !this.selClauseId) return;
+
+    const std = this.catalog.standardById(this.selStdId);
+    const clause = this.catalog.clauseById(this.selStdId, this.selClauseId);
+    if (!std || !clause) return;
+
+    // De-dup by (code+clause)
+    const exists = this.projectStandards.some(s => s.code === std.code && s.clause === clause.code);
+    if (exists) return;
+
+    this.projectStandards.push({
+      code: std.code,
+      clause: clause.code,
+      note: clause.title
+    });
+
+    // Reset helper clause; keep standard for quick multiple additions
+    this.selClauseId = undefined;
+  }
+
+  removeProjectStd(idx: number): void {
+    this.projectStandards.splice(idx, 1);
   }
 }
