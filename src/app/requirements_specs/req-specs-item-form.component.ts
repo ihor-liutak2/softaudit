@@ -14,8 +14,14 @@ import {
 } from './req-specs.types';
 import { StandardsCatalogService } from './standards-catalog.service';
 
-// src/app/requirements_specs/req-specs-item-form.component.ts
-// ...imports ті самі
+// --- Quality model (type + computation)
+  type QualityCheck = {
+    key: string;                // stable id
+    label: string;              // short label for a badge
+    ok: boolean;                // pass/fail
+    severity: 'ok'|'warn'|'fail';
+    tip?: string;               // suggestion if not ok
+  };
 
 @Component({
   selector: 'app-req-specs-item-form',
@@ -76,6 +82,30 @@ import { StandardsCatalogService } from './standards-catalog.service';
                 placeholder="- System shall ...&#10;- Response time ..."></textarea>
       <div class="form-text">Each non-empty line will be saved as a separate acceptance criterion.</div>
     </div>
+
+
+    <!-- Live quality guidance (SMART + IEEE 830) -->
+    <div class="mt-2">
+      <div class="small text-muted mb-1">Quality checks (SMART & IEEE 830)</div>
+
+      <!-- Badges summary -->
+      <div>
+        @for (q of computeQualityChecks(item, splitCriteria(acceptanceCriteriaText)); track q.key) {
+          <span class="me-1" [ngClass]="badgeClass(q)">{{ q.label }}{{ q.ok ? ' ✓' : '' }}</span>
+        }
+      </div>
+
+      <!-- Actionable tips -->
+      <ul class="mt-2 small mb-0">
+        @for (q of computeQualityChecks(item, splitCriteria(acceptanceCriteriaText)); track 'tip-'+q.key) {
+          @if (!q.ok && q.tip) {
+            <li>{{ q.tip }}</li>
+          }
+        }
+      </ul>
+    </div>
+
+
 
     <!-- Rationale / Source -->
     <div class="row g-3 mb-3">
@@ -396,4 +426,123 @@ export class ReqSpecsItemFormComponent {
     this.selStdId = undefined;
     this.selClauseId = undefined;
   }
+
+
+  // --- Parse AC textarea into string[] (one per line)
+  splitCriteria(text?: string): string[] {
+    return (text || '')
+      .split(/\r?\n/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // --- Heuristics used by checks
+  private hasNumberAndUnit(s?: string): boolean {
+    if (!s) return false;
+    const number = /\b\d+(\.\d+)?\b/;
+    const unitOrComparator =
+      /\b(%|ms|s|sec|seconds|min|minutes|h|hrs|rps|tps|req\/s|users|KB|MB|GB|GiB|MiB|bps|kbps|Mbps|Hz|kHz|°C|C|F)\b|<=|>=|<|>|within|under|no more than|at least/i;
+    return number.test(s) && unitOrComparator.test(s);
+  }
+
+  private hasTimeBound(s?: string): boolean {
+    if (!s) return false;
+    return /\b(within\s+\d+\s*(ms|s|sec|minutes?|hours?)|by\s+\d{4}-\d{2}-\d{2}|until\s+\d{4}-\d{2}-\d{2})\b/i.test(s);
+  }
+
+  private looksLikeRequirement(s?: string): boolean {
+    if (!s) return false;
+    return /\b(shall|must|should|will)\b/i.test(s);
+  }
+
+  private hasAmbiguity(s?: string): boolean {
+    if (!s) return false;
+    const vague = /\b(fast|quick|user[- ]?friendly|easy|optimi[sz]e|as soon as possible|etc\.?|and\/or|robust|state[- ]of[- ]the[- ]art|adequate|appropriate|tbd|to be determined|approximately)\b/i;
+    return vague.test(s);
+  }
+
+  // 's' can be undefined, but is not an optional parameter anymore
+  private tooLong(s: string | undefined, max: number): boolean {
+    return !!s && s.length > max;
+  }
+
+
+  private any<T>(arr?: T[]): boolean { return Array.isArray(arr) && arr.length > 0; }
+
+  
+
+  /** Build SMART & IEEE-830 checks from current form values. */
+  computeQualityChecks(
+    item: {
+      title?: string;
+      description?: string;
+      acceptanceCriteria?: string[];
+      priority?: string;
+      rationale?: string;
+      source?: string;
+      tags?: string[];
+      links?: Array<{ title?: string; url?: string }>;
+      related?: string[];
+    },
+    criteria?: string[]
+  ): QualityCheck[] {
+    const ac = (item.acceptanceCriteria && item.acceptanceCriteria.length)
+      ? item.acceptanceCriteria
+      : (criteria || []);
+
+    const title = (item.title || '').trim();
+    const desc  = (item.description || '').trim();
+
+    // SMART
+    const specificOk   = this.looksLikeRequirement(title) || this.looksLikeRequirement(desc);
+    const measurableOk = this.hasNumberAndUnit(title) || this.hasNumberAndUnit(desc) || ac.some(x => this.hasNumberAndUnit(x));
+    const achievableOk = !/\b(100%\s*uptime|zero\s*latency|never\s*fail|always|impossible)\b/i.test(title + ' ' + desc);
+    const relevantOk   = !!(item.rationale || item.source);
+    const timeOk       = this.hasTimeBound(title) || this.hasTimeBound(desc) || ac.some(x => this.hasTimeBound(x));
+
+    // IEEE 830 (automatable subset)
+    const unambiguousOk = !(this.hasAmbiguity(title) || this.hasAmbiguity(desc) || ac.some(x => this.hasAmbiguity(x)));
+    const completeOk    = !!title && (desc.length > 0 || ac.length > 0);
+    const verifiableOk  = ac.length > 0;
+    const rankedOk      = !!(item.priority && item.priority.trim());
+    const traceableOk   = !!((item.source && item.source.trim()) || this.any(item.links) || this.any(item.related));
+    const modifiableOk  = !this.tooLong(title, 160) && !this.tooLong(desc, 2000);
+
+    const checks: QualityCheck[] = [
+      { key: 'smart-specific',   label: 'Specific',    ok: specificOk,   severity: specificOk ? 'ok' : 'fail',
+        tip: specificOk ? undefined : 'Use an action verb (e.g., “The system shall …”).' },
+      { key: 'smart-measurable', label: 'Measurable',  ok: measurableOk, severity: measurableOk ? 'ok' : 'warn',
+        tip: measurableOk ? undefined : 'Add numbers/units or comparators (≤, ≥, within N ms, % users, etc.).' },
+      { key: 'smart-achievable', label: 'Achievable',  ok: achievableOk, severity: achievableOk ? 'ok' : 'warn',
+        tip: achievableOk ? undefined : 'Avoid absolute claims like “zero latency”, “100% uptime”.' },
+      { key: 'smart-relevant',   label: 'Relevant',    ok: relevantOk,   severity: relevantOk ? 'ok' : 'warn',
+        tip: relevantOk ? undefined : 'Provide rationale or source to justify relevance.' },
+      { key: 'smart-time',       label: 'Time-bound',  ok: timeOk,       severity: timeOk ? 'ok' : 'warn',
+        tip: timeOk ? undefined : 'Add a timeframe (“within 200 ms”, “by 2025-03-01”).' },
+
+      { key: 'ieee-unambiguous', label: 'Unambiguous', ok: unambiguousOk, severity: unambiguousOk ? 'ok' : 'warn',
+        tip: unambiguousOk ? undefined : 'Avoid vague words: fast, user-friendly, etc., and/or, approx.' },
+      { key: 'ieee-complete',    label: 'Complete',    ok: completeOk,    severity: completeOk ? 'ok' : 'warn',
+        tip: completeOk ? undefined : 'Add short description or at least one acceptance criterion.' },
+      { key: 'ieee-verifiable',  label: 'Verifiable',  ok: verifiableOk,  severity: verifiableOk ? 'ok' : 'fail',
+        tip: verifiableOk ? undefined : 'Add acceptance criteria that a tester can check.' },
+      { key: 'ieee-ranked',      label: 'Ranked',      ok: rankedOk,      severity: rankedOk ? 'ok' : 'warn',
+        tip: rankedOk ? undefined : 'Set priority (Must/Should/Could/Won’t or High/Med/Low).' },
+      { key: 'ieee-traceable',   label: 'Traceable',   ok: traceableOk,   severity: traceableOk ? 'ok' : 'warn',
+        tip: traceableOk ? undefined : 'Add source, link, or related IDs for traceability.' },
+      { key: 'ieee-modifiable',  label: 'Modifiable',  ok: modifiableOk,  severity: modifiableOk ? 'ok' : 'warn',
+        tip: modifiableOk ? undefined : 'Keep title concise (<160 chars) and description reasonably short.' },
+    ];
+
+    return checks;
+  }
+
+  // --- Badge class helper
+  badgeClass(q: QualityCheck): string {
+    if (q.severity === 'ok')   return 'badge text-bg-success';
+    if (q.severity === 'fail') return 'badge text-bg-danger';
+    return 'badge text-bg-warning';
+  }
+
+  
 }
