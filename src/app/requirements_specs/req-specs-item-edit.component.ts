@@ -104,71 +104,95 @@ export class ReqSpecsItemEditComponent implements OnInit {
     };
   }
 
-  /** Save (create or update) the requirement - overwrite whole doc */
-  async save(item: ReqSpecsItem) {
-    const id = this.itemId ?? crypto.randomUUID();
-    const ref = doc(this.firestore, `${COLL_REQSPECS}/${id}`);
-
-    // Prefer parentId from query when creating; keep explicit value on edit
-    const parentId = this.isEdit
-      ? (item.parentId?.trim() || undefined)
-      : (this.parentIdFromQuery ?? (item.parentId?.trim() || undefined));
-
-    // Normalize arrays
-    const acceptanceCriteria = (item.acceptanceCriteria ?? [])
-      .map(s => (s ?? '').trim())
-      .filter(Boolean);
-    const standards = (item.standards ?? [])
-      .map(s => ({
-        code: (s.code ?? '').trim(),
-        clause: (s.clause ?? '').trim() || undefined,
-        note: (s.note ?? '').trim() || undefined,
-      }))
-      .filter(s => !!s.code);
-    type Link = { title: string; url: string };
-    const links = (item.links ?? [])
-      .map(l => {
-        const url = (l?.url ?? '').trim();
-        const title = (l?.title ?? '').trim();
-        if (!url) return null;
-        return { title: title || url, url } as Link;
-      })
-      .filter((v): v is Link => v !== null);
-    const related = (item.related ?? []).map(x => `${x}`.trim()).filter(Boolean);
-    const tags = (item.tags ?? []).map(t => t.trim()).filter(Boolean);
-
-    // Keep original createdAt/createdBy on edit (since we overwrite the doc)
-    const createdAt = this.existingItem?.createdAt || item.createdAt || new Date().toISOString();
-    const createdBy =
-      this.existingItem?.createdBy ||
-      item.createdBy ||
-      this.currentUserRef || { uid: 'unknown' };
-
-    // Build full payload (no undefined allowed for Firestore)
-    const payload: ReqSpecsItem = {
-      ...item,
-      id,
-      projectId: this.projectId,
-      parentId, // may be undefined -> will be omitted below
-      acceptanceCriteria: acceptanceCriteria.length ? acceptanceCriteria : undefined,
-      standards: standards.length ? standards : undefined,
-      links: links.length ? links : undefined,
-      related: related.length ? related : undefined,
-      tags: tags.length ? tags : undefined,
-      rationale: item.rationale?.trim() || undefined,
-      source: item.source?.trim() || undefined,
-      order: item.order ?? undefined,
-      createdAt,
-      createdBy,
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Strip every `undefined` before sending to Firestore
-    const clean = omitUndefinedDeep(payload);
-
-    // Overwrite entire document (deletes fields you omitted)
-    await setDoc(ref, clean, { merge: false });
-
-    this.router.navigate(['/req-specs/project', this.projectId]);
+  /** Generate a safe id (uses existing, crypto.randomUUID, or a fallback) */
+  private safeId(existing?: string): string {
+    const e = (existing || '').trim();
+    if (e) return e;
+    // browser-safe fallback if crypto.randomUUID is unavailable
+    const hasCryptoUUID = typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function';
+    return hasCryptoUUID
+      ? (crypto as any).randomUUID()
+      : `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   }
+
+  /** Save (create or update) the requirement - full overwrite */
+  async save(item: ReqSpecsItem) {
+    try {
+      // Resolve id deterministically
+      const id = this.itemId ?? this.safeId(item.id);
+
+      // Prefer parentId from query when creating; respect explicit value on edit
+      const parentId = this.isEdit
+        ? (item.parentId?.trim() || undefined)
+        : (this.parentIdFromQuery ?? (item.parentId?.trim() || undefined));
+
+      // Normalize arrays
+      const acceptanceCriteria = (item.acceptanceCriteria ?? [])
+        .map(s => (s ?? '').trim())
+        .filter(Boolean);
+
+      const standards = (item.standards ?? [])
+        .map(s => ({
+          code: (s.code ?? '').trim(),
+          clause: (s.clause ?? '').trim() || undefined,
+          note: (s.note ?? '').trim() || undefined,
+        }))
+        .filter(s => !!s.code);
+
+      type Link = { title: string; url: string };
+      const links = (item.links ?? [])
+        .map(l => {
+          const url = (l?.url ?? '').trim();
+          const title = (l?.title ?? '').trim();
+          if (!url) return null;
+          return { title: title || url, url } as Link;
+        })
+        .filter((v): v is Link => v !== null);
+
+      const related = (item.related ?? []).map(x => `${x}`.trim()).filter(Boolean);
+      const tags = (item.tags ?? []).map(t => t.trim()).filter(Boolean);
+
+      // Keep original createdAt/createdBy on edit (we overwrite the doc)
+      const createdAt = this.existingItem?.createdAt || item.createdAt || new Date().toISOString();
+      const createdBy =
+        this.existingItem?.createdBy ||
+        item.createdBy ||
+        this.currentUserRef || { uid: 'unknown' };
+
+      const payload: ReqSpecsItem = {
+        ...item,
+        id,
+        projectId: this.projectId,                 // enforce route project
+        parentId,                                  // may be undefined
+        acceptanceCriteria: acceptanceCriteria.length ? acceptanceCriteria : undefined,
+        standards: standards.length ? standards : undefined,
+        links: links.length ? links : undefined,
+        related: related.length ? related : undefined,
+        tags: tags.length ? tags : undefined,
+        rationale: item.rationale?.trim() || undefined,
+        source: item.source?.trim() || undefined,
+        order: item.order ?? undefined,
+        createdAt,
+        createdBy,
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Remove all undefined fields before writing
+      const clean = omitUndefinedDeep(payload);
+
+      // Write (full overwrite)
+      const ref = doc(this.firestore, `${COLL_REQSPECS}/${id}`);
+      await setDoc(ref, clean, { merge: false });
+
+      // Optional: console for diagnostics
+      console.log('[ReqSpecsItemEdit] Saved', clean);
+
+      // Navigate back to project
+      this.router.navigate(['/req-specs/view', this.projectId]);
+    } catch (err: any) {
+      console.error('[ReqSpecsItemEdit] Save failed', err);
+      alert(`Failed to save requirement: ${err?.message || err}`);
+    }
+  }
+
 }

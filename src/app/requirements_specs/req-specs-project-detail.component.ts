@@ -21,6 +21,10 @@ import { COLL_REQSPECS } from './req-specs.collections';
         <h2 class="mb-3">{{ project!.name }}</h2>
         <p class="text-muted">{{ project!.description || 'No description provided.' }}</p>
 
+        <div class="small text-muted" *ngIf="getEstimationSummary() as est">
+          Estimation: {{ est }}
+        </div>
+
         <!-- Project facts -->
         <ul class="list-group mt-3">
           <li class="list-group-item">
@@ -146,4 +150,20 @@ export class ReqSpecsProjectDetailComponent implements OnInit {
       this.items = [];
     }
   }
+
+
+  /** Returns aggregate estimation summary for header badges */
+  getEstimationSummary() {
+    const p = this.project;
+    const list = this.items ?? [];
+    if (!p) return null;
+
+    const agg = this.reqSpecsService.computeProjectEstimates(p, list);
+    if (agg.mode === 'points') {
+      return `${agg.done}/${agg.total} pts (${agg.progressPct}%)`;
+    } else {
+      return `${agg.done}/${agg.total} h (${agg.progressPct}%)`;
+    }
+  }
+
 }

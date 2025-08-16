@@ -67,6 +67,28 @@ type Status = ReqSpecsProject['status'];
         </div>
       </div>
 
+      <!-- Estimation settings -->
+      <div class="row g-3 mt-3">
+        <div class="col-md-4">
+          <label class="form-label">Estimation mode</label>
+          <select class="form-select" [(ngModel)]="estimationMode" name="estimationMode">
+            <option [ngValue]="'points'">Story points</option>
+            <option [ngValue]="'time'">Hours</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Velocity (pts/sprint)</label>
+          <input type="number" class="form-control"
+                [(ngModel)]="velocityPtsPerSprint" name="velocityPtsPerSprint" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Capacity (hours/sprint)</label>
+          <input type="number" class="form-control"
+                [(ngModel)]="capacityHoursPerSprint" name="capacityHoursPerSprint" />
+        </div>
+      </div>
+
+
       <!-- Stakeholders -->
       <div class="mt-4">
         <div class="d-flex justify-content-between align-items-center">
@@ -239,6 +261,12 @@ export class ReqSpecsProjectFormComponent {
   sectorId: string = '';
   status: Status = 'draft';
   deadlineAt: string = ''; // yyyy-mm-dd for <input type="date">
+  /** Estimation settings for this project */
+  estimationMode: 'points' | 'time' = 'points';
+  velocityPtsPerSprint?: number;
+  capacityHoursPerSprint?: number;
+  sprintLengthDays?: number;
+
 
   createdAt = '';
   updatedAt = '';
@@ -276,6 +304,12 @@ export class ReqSpecsProjectFormComponent {
     );
 
     this.tags.set([...(m.tags ?? [])]);
+
+    // Estimation settings (new)
+    this.estimationMode = (m.estimationMode as any) ?? 'points';
+    this.velocityPtsPerSprint = m.velocityPtsPerSprint;
+    this.capacityHoursPerSprint = m.capacityHoursPerSprint;
+    this.sprintLengthDays = m.sprintLengthDays;
 
     // Initialize local standards array from model
     this.projectStandards = [...(m.standards ?? [])];
@@ -319,7 +353,13 @@ export class ReqSpecsProjectFormComponent {
       deadlineAt: this.deadlineAt ? this.fromDateInput(this.deadlineAt) : undefined,
       createdBy: this.model?.createdBy ?? this.createdBy ?? { uid: 'unknown' },
       createdAt: this.model?.createdAt ?? this.createdAt ?? nowIso,
-      updatedAt: nowIso
+      updatedAt: nowIso,
+
+      // Estimation settings (new)
+      estimationMode: this.estimationMode || undefined,
+      velocityPtsPerSprint: this.velocityPtsPerSprint,
+      capacityHoursPerSprint: this.capacityHoursPerSprint,
+      sprintLengthDays: this.sprintLengthDays
     });
 
     this.save.emit(payload);

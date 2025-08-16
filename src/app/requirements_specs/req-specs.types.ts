@@ -6,6 +6,7 @@ export type ISODate = string; // ISO string, e.g., new Date().toISOString()
 export type RequirementType = 'functional' | 'nonfunctional' | 'constraint' | 'glossary';
 export type Priority = 'must' | 'should' | 'could' | 'wont';
 export type Status = 'draft' | 'in-review' | 'approved' | 'deprecated';
+export type EstimationMode = 'points' | 'time';
 
 export interface UserRef {
   uid: Id;
@@ -67,6 +68,15 @@ export interface ReqSpecsProject {
     term: string;
     definition: string;
   }>;
+
+  /** Controls how estimates are displayed/aggregated on this project */
+  estimationMode?: EstimationMode;          // 'points' (default) | 'time'
+  /** Optional planning helper (velocity in points per sprint) */
+  velocityPtsPerSprint?: number;
+  /** Optional planning helper (capacity in hours per sprint) */
+  capacityHoursPerSprint?: number;
+  /** Optional planning helper (sprint length in days) */
+  sprintLengthDays?: number;
 
   // Stakeholders
   stakeholders?: Array<{
@@ -135,6 +145,13 @@ export interface ReqSpecsItem {
   updatedAt: ISODate;
 
   tags?: string[];
+
+   /** Story points estimate */
+  estimatePoints?: number;
+  /** Initial time estimate in hours */
+  estimateHours?: number;
+  /** Remaining hours for tracking (optional) */
+  remainingHours?: number;
 }
 
 // --- Checklist (template & result) ------------------------------------------

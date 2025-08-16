@@ -10,7 +10,7 @@ import {
   CollectionReference,
   DocumentData,
 } from '@angular/fire/firestore';
-import { ReqSpecsProject } from './req-specs.types';
+import { ReqSpecsItem, ReqSpecsProject } from './req-specs.types';
 import { Company } from '../core/general/general.types';
 import { VOCABULARY_SECTORS } from '../core/utils/vocabulary';
 import { COLL_REQSPECS_PROJECTS, COLL_COMPANIES } from './req-specs.collections';
@@ -118,5 +118,47 @@ async saveProject(project: ReqSpecsProject): Promise<string> {
     if (this.companies().length) return;
     const snap = await getDocs(this.companiesCol);
     this.companies.set(snap.docs.map(d => d.data() as Company));
+  }
+
+  /** Aggregate project estimates by selected mode (points or time) */
+  computeProjectEstimates(
+    project: ReqSpecsProject,
+    items: ReqSpecsItem[]
+  ): {
+    mode: 'points' | 'time',
+    total: number,
+    done: number,
+    remaining: number,
+    progressPct: number
+  } {
+    const mode: 'points' | 'time' = project.estimationMode ?? 'points';
+
+    const isDone = (s?: string) => (s ?? '').toLowerCase() === 'implemented';
+
+    if (mode === 'points') {
+      const total = items.reduce((sum, r) => sum + (r.estimatePoints ?? 0), 0);
+      const done  = items.reduce((sum, r) => sum + (isDone(r.status) ? (r.estimatePoints ?? 0) : 0), 0);
+      const remaining = Math.max(0, total - done);
+      const progressPct = total ? Math.round((done / total) * 100) : 0;
+      return { mode, total, done, remaining, progressPct };
+    } else {
+      const total = items.reduce((sum, r) => sum + (r.estimateHours ?? 0), 0);
+
+      // If remainingHours is provided on any item, prefer it for remaining calc
+      const remainingFromItems = items
+        .map(r => r.remainingHours)
+        .filter((v): v is number => typeof v === 'number')
+        .reduce((a, b) => a + b, 0);
+
+      const hasRemaining = items.some(r => typeof r.remainingHours === 'number');
+
+      const done = hasRemaining
+        ? Math.max(0, total - remainingFromItems)
+        : items.reduce((sum, r) => sum + (isDone(r.status) ? (r.estimateHours ?? 0) : 0), 0);
+
+      const remaining = Math.max(0, total - done);
+      const progressPct = total ? Math.round((done / total) * 100) : 0;
+      return { mode, total, done, remaining, progressPct };
+    }
   }
 }

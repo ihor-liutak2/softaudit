@@ -28,7 +28,7 @@ import { StandardsCatalogService } from './standards-catalog.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-  <form (ngSubmit)="submit()" class="p-3 border rounded bg-light">
+  <form (ngSubmit)="submit()" class="p-3 border rounded bg-light" novalidate>
 
     <!-- Optional parent info (read-only) -->
     @if (parentId) {
@@ -84,6 +84,45 @@ import { StandardsCatalogService } from './standards-catalog.service';
     </div>
 
 
+    <!-- Estimation -->
+    <div class="row g-3 mt-3">
+      @if (estimationMode === 'points') {
+        <div class="col-md-4">
+          <label class="form-label">Estimate (points)</label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="item.estimatePoints"
+            name="estimatePoints"
+            min="0" />
+        </div>
+      }
+
+      @if (estimationMode === 'time') {
+        <div class="col-md-4">
+          <label class="form-label">Estimate (hours)</label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="item.estimateHours"
+            name="estimateHours"
+            min="0" />
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Remaining (hours)</label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="item.remainingHours"
+            name="remainingHours"
+            min="0" />
+        </div>
+      }
+    </div>
+
+
+
     <!-- Live quality guidance (SMART + IEEE 830) -->
     <div class="mt-2">
       <div class="small text-muted mb-1">Quality checks (SMART & IEEE 830)</div>
@@ -104,8 +143,6 @@ import { StandardsCatalogService } from './standards-catalog.service';
         }
       </ul>
     </div>
-
-
 
     <!-- Rationale / Source -->
     <div class="row g-3 mb-3">
@@ -252,8 +289,12 @@ export class ReqSpecsItemFormComponent {
   @Input() createdBy!: UserRef;
   @Input() parentId?: Id;            // passed from context (query param / menu)
   @Input() parentLabel?: string;     // optional pretty label for parent
+  /** Controls which estimate field is shown in the UI */
+  @Input() estimationMode: 'points' | 'time' = 'points';
+
 
   @Output() saved = new EventEmitter<ReqSpecsItem>();
+
 
   requirementTypes: RequirementType[] = ['functional', 'nonfunctional', 'constraint', 'glossary'];
   priorities: Priority[] = ['must', 'should', 'could', 'wont'];
@@ -313,23 +354,35 @@ export class ReqSpecsItemFormComponent {
     return {
       id: src?.id ?? '',
       projectId: this.projectId,
+
       type: (src?.type ?? 'functional'),
       title: this.norm(src?.title) ?? '',
       description: this.norm(src?.description) ?? '',
+
       acceptanceCriteria: src?.acceptanceCriteria,
       rationale: this.norm(src?.rationale),
       source: this.norm(src?.source),
+
       priority: (src?.priority ?? 'should'),
       status: (src?.status ?? 'draft'),
-      parentId: this.parentId ?? src?.parentId, // set from outside; user does not edit
+
+      parentId: this.parentId ?? src?.parentId,
       order: src?.order,
+
       standards: src?.standards,
       links: src?.links,
       related: src?.related,
+
       createdBy: src?.createdBy ?? this.createdBy,
       createdAt,
       updatedAt,
+
       tags: src?.tags,
+
+      // Estimates (seed form model for both create/edit)
+      estimatePoints: src?.estimatePoints,
+      estimateHours: src?.estimateHours,
+      remainingHours: src?.remainingHours,
     } as ReqSpecsItem;
   }
 
@@ -339,7 +392,7 @@ export class ReqSpecsItemFormComponent {
   removeLink(i: number) { this.links = this.links.filter((_, idx) => idx !== i); }
 
   formValid(): boolean {
-    return !!this.item.title && !!this.item.projectId && !!this.item.createdBy?.uid
+    return !!this.item.title && !!this.item.projectId
       && !!this.item.type && !!this.item.priority && !!this.item.status;
   }
 
@@ -352,61 +405,103 @@ export class ReqSpecsItemFormComponent {
     this.tagsText = (this.model?.tags ?? []).join(' ');
   }
 
-  submit(): void {
-    // Normalize
-    this.item.title = this.item.title.trim();
-    this.item.description = this.item.description?.trim() ?? '';
-    this.item.rationale = this.norm(this.item.rationale);
-    this.item.source = this.norm(this.item.source);
-
-    // Text → arrays
-    const acceptanceCriteria = this.parseLines(this.acceptanceCriteriaText);
-    const related = this.parseList(this.relatedText);
-    const tags = this.parseList(this.tagsText);
-
-    // Standards clean
-    const standards = this.standards
-      .map(s => ({ code: this.norm(s.code), clause: this.norm(s.clause), note: this.norm(s.note) }))
-      .filter(s => !!s.code) as StandardRef[];
-
-    // Links clean with required fields only
-    const links = this.links
-      .map(l => {
-        const url = this.norm(l.url);
-        if (!url) return null;
-        const title = this.norm(l.title) ?? url;
-        return { title, url };
-      })
-      .filter((x): x is { title: string; url: string } => !!x);
-
-    const payload: ReqSpecsItem = {
-      ...this.item,
-      acceptanceCriteria,
-      related,
-      tags,
-      standards: standards.length ? standards : undefined,
-      links: links.length ? links : undefined,
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Strip empties
-    if (!payload.parentId) delete (payload as any).parentId;
-    if (!payload.order && payload.order !== 0) delete (payload as any).order;
-    if (!payload.acceptanceCriteria?.length) delete (payload as any).acceptanceCriteria;
-    if (!payload.related?.length) delete (payload as any).related;
-    if (!payload.tags?.length) delete (payload as any).tags;
-    if (!payload.standards?.length) delete (payload as any).standards;
-    if (!payload.links?.length) delete (payload as any).links;
-
-    this.saved.emit(payload);
+  private toNumberOrUndef(v: any): number | undefined {
+    const n = typeof v === 'string' && v.trim() === '' ? NaN : Number(v);
+    return Number.isFinite(n) ? n : undefined;
   }
+
+
+  submit(): void {
+  // Guard: title and projectId must exist
+  const title = (this.item.title ?? '').trim();
+  if (!title) {
+    console.warn('[ReqSpecsItemForm] submit(): title is required');
+    return;
+  }
+  if (!this.projectId) {
+    console.warn('[ReqSpecsItemForm] submit(): missing projectId');
+    return;
+  }
+
+  // Normalize core fields
+  this.item.title = title;
+  this.item.description = this.item.description?.trim() ?? '';
+  this.item.rationale = this.norm(this.item.rationale);
+  this.item.source = this.norm(this.item.source);
+
+  // Text -> arrays
+  const acceptanceCriteria = this.parseLines(this.acceptanceCriteriaText);
+  const related  = this.parseList(this.relatedText);
+  const tags     = this.parseList(this.tagsText);
+
+  // Standards -> clean list (code required)
+  const standards = this.standards
+    .map(s => ({ code: this.norm(s.code), clause: this.norm(s.clause), note: this.norm(s.note) }))
+    .filter(s => !!s.code) as StandardRef[];
+
+  // Links -> keep only valid url; default title to url
+  const links = this.links
+    .map(l => {
+      const url = this.norm(l.url);
+      if (!url) return null;
+      const title = this.norm(l.title) ?? url;
+      return { title, url };
+    })
+    .filter((x): x is { title: string; url: string } => !!x);
+
+  // IDs / timestamps
+  const nowIso = new Date().toISOString();
+  const genId = () => (globalThis.crypto && 'randomUUID' in globalThis.crypto)
+    ? (globalThis.crypto as any).randomUUID()
+    : Math.random().toString(36).slice(2);
+  const id = this.item.id || genId();
+  const createdAt = this.item.createdAt || nowIso;
+
+  // Normalize numeric estimates
+  const estimatePoints = this.toNumberOrUndef((this.item as any).estimatePoints);
+  const estimateHours = this.toNumberOrUndef((this.item as any).estimateHours);
+  const remainingHours = this.toNumberOrUndef((this.item as any).remainingHours);
+
+
+  // Build payload
+  const payload: ReqSpecsItem = {
+    ...this.item,
+    id,
+    projectId: this.projectId, // ensure it is present
+    title: this.item.title,
+    createdAt,
+    updatedAt: nowIso,
+    acceptanceCriteria,
+    related,
+    tags,
+    standards: standards.length ? standards : undefined,
+    links: links.length ? links : undefined,
+    // normalized estimates (numbers or undefined)
+    estimatePoints,
+    estimateHours,
+    remainingHours,
+  };
+
+  // Strip empties safely
+  if (!payload.parentId) delete (payload as any).parentId;
+  if (payload.order === undefined || payload.order === null) delete (payload as any).order;
+  if (!payload.acceptanceCriteria?.length) delete (payload as any).acceptanceCriteria;
+  if (!payload.related?.length) delete (payload as any).related;
+  if (!payload.tags?.length) delete (payload as any).tags;
+  if (!payload.standards?.length) delete (payload as any).standards;
+  if (!payload.links?.length) delete (payload as any).links;
+
+  // Fire both outputs so parents using (save) or (saved) will work
+  this.saved.emit(payload);
+}
+
 
   /** Add selected (standard, clause) from catalog into standards list */
   addRefFromCatalog(): void {
     if (!this.selStdId || !this.selClauseId) return;
 
     const ref = this.catalog.toRef(this.selStdId, this.selClauseId);
-    console.debug('[Catalog Add]', ref);
+    console.log('[Catalog Add]', ref);
     if (!ref) return;
 
     // Prevent duplicates (same code + clause)
