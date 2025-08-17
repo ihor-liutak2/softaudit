@@ -89,10 +89,15 @@ export class ReqSpecsAddProjectComponent implements OnInit {
     try {
       await this.reqSpecs.saveProject(updated);
       this.toastService.show('Project saved successfully', 'success');
-      this.router.navigate(['/req-specs']);
-    } catch (err) {
+      this.router.navigate(['/req-specs/view', updated.id]);
+    } catch (err: any) {
       console.error('[ReqSpecsAddProject] save failed', err);
-      this.toastService.show('Failed to save project. Please try again.', 'danger');
+      const msg =
+        (err?.code === 'permission-denied') ? 'Permission denied.' :
+        (String(err?.message || '').includes('Unsupported field value: undefined'))
+          ? 'Some fields contained undefined values. Please try again.'
+          : 'Failed to save project. Please try again.';
+      this.toastService.show(msg, 'danger');
     }
   }
 }

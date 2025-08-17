@@ -1,9 +1,11 @@
-import { Component, Input, Output, EventEmitter, computed, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, computed, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ReqSpecsProject } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
+import { AppUser } from '../core/user/user.model';
+import { ReqSpecsService } from './req-specs.service';
 
 @Component({
   selector: 'app-req-specs-project-table',
@@ -134,6 +136,13 @@ import { Company, Sector } from '../core/general/general.types';
                 class="btn btn-sm btn-outline-success">
                 <i class="bi bi-file-earmark-text"></i> SRS
               </a>
+
+              <!-- Actions (append this button) -->
+              @if (canDelete(project)) {
+                <button class="btn btn-sm btn-outline-danger ms-1" (click)="onDelete(project)">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              }
             </td>
           </tr>
         }
@@ -162,6 +171,11 @@ export class ReqSpecsProjectTableComponent {
   // Events
   @Output() editProject = new EventEmitter<ReqSpecsProject>();
   @Output() manageDetails = new EventEmitter<ReqSpecsProject>();
+
+  @Input() currentUser?: AppUser;
+  @Output() deleteProject = new EventEmitter<ReqSpecsProject>();
+
+  private reqSpecs = inject(ReqSpecsService);
 
   // Filter state
   searchText = signal('');
@@ -221,5 +235,16 @@ export class ReqSpecsProjectTableComponent {
   short(text: string, max = 100): string {
     if (!text) return '';
     return text.length <= max ? text : text.slice(0, max - 1).trimEnd() + '…';
+  }
+
+  canDelete(p: ReqSpecsProject): boolean {
+    return !!this.currentUser && this.reqSpecs.canDelete(p, this.currentUser);
+  }
+
+  onDelete(p: ReqSpecsProject) {
+    if (!this.canDelete(p)) return;
+    if (confirm(`Delete project "${p.name}"? This cannot be undone.`)) {
+      this.deleteProject.emit(p);
+    }
   }
 }

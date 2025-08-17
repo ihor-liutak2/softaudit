@@ -3,12 +3,20 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { ReqSpecsProject, StandardRef, UserRef } from './req-specs.types';
+import { ReqSpecsProject, StandardRef, UserRef, StakeholderRole } from './req-specs.types';
 import { Company, Sector } from '../core/general/general.types';
 import { StandardsCatalogService } from './standards-catalog.service';
 
 type StakeholderRow = { name: string; role?: string; contact?: string };
 type Status = ReqSpecsProject['status'];
+// inside the component (top-level, above submit)
+type StakeholderClean = {
+  uid?: string;
+  name: string;
+  role: StakeholderRole;
+  contact?: string;
+};
+
 
 @Component({
   selector: 'app-req-specs-project-form',
@@ -111,11 +119,39 @@ type Status = ReqSpecsProject['status'];
             <tbody>
               @for (row of stakeholders(); track $index; let i = $index) {
                 <tr>
-                  <td><input class="form-control" [(ngModel)]="row.name" [name]="'sh_name_' + i" /></td>
-                  <td><input class="form-control" [(ngModel)]="row.role" [name]="'sh_role_' + i" /></td>
-                  <td><input class="form-control" [(ngModel)]="row.contact" [name]="'sh_contact_' + i" /></td>
+                  <!-- Name (standalone so no name attribute needed) -->
+                  <td>
+                    <input
+                      class="form-control"
+                      [(ngModel)]="row.name"
+                      [ngModelOptions]="{ standalone: true }" />
+                  </td>
+
+                  <!-- Role restricted to editor/viewer -->
+                  <td>
+                    <select
+                      class="form-select"
+                      [(ngModel)]="row.role"
+                      [ngModelOptions]="{ standalone: true }">
+                      <option [ngValue]="'editor'">editor</option>
+                      <option [ngValue]="'viewer'">viewer</option>
+                    </select>
+                  </td>
+
+                  <!-- Contact (email/phone/etc.) -->
+                  <td>
+                    <input
+                      class="form-control"
+                      [(ngModel)]="row.contact"
+                      [ngModelOptions]="{ standalone: true }" />
+                  </td>
+
+                  <!-- Remove row -->
                   <td class="text-end">
-                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeStakeholder(i)">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="removeStakeholder(i)">
                       <i class="bi bi-x-lg"></i>
                     </button>
                   </td>
@@ -323,6 +359,13 @@ export class ReqSpecsProjectFormComponent {
     return !!this.name && !!this.status;
   }
 
+  /** Coerce free-text role to a valid StakeholderRole ('editor' | 'viewer'). */
+  private normalizeRole(role?: string): StakeholderRole {
+    const r = (role || '').trim().toLowerCase();
+    return r === 'editor' ? 'editor' : 'viewer';
+  }
+
+
   // Submit → emit normalized ReqSpecsProject
   submit() {
     if (!this.isValid()) return;
@@ -330,14 +373,25 @@ export class ReqSpecsProjectFormComponent {
     const nowIso = new Date().toISOString();
     const uid = this.id || crypto.randomUUID();
 
-    // Compact stakeholders: remove empty rows
-    const sh = this.stakeholders()
-      .map(r => ({
-        name: r.name?.trim(),
-        role: r.role?.trim() || undefined,
-        contact: r.contact?.trim() || undefined
-      }))
-      .filter(r => !!r.name) as StakeholderRow[];
+    // Compact stakeholders: remove empty rows and coerce role to StakeholderRole
+    const sh: StakeholderClean[] = this.stakeholders()
+      .map<StakeholderClean | null>(r => {
+        const name = (r.name || '').trim();
+        if (!name) return null;
+
+        const role: StakeholderRole = this.normalizeRole(r.role);
+        const contact = (r.contact || '').trim();
+        const uid = (r as any).uid ? String((r as any).uid).trim() : undefined;
+
+        // Only include optional fields when present, so their keys stay optional
+        return {
+          name,
+          role,
+          ...(contact ? { contact } : {}),
+          ...(uid ? { uid } : {})
+        };
+      })
+      .filter((v): v is StakeholderClean => v !== null);
 
     // Build clean payload without undefined (Firestore-safe)
     const payload: ReqSpecsProject = this.compact<ReqSpecsProject>({
@@ -367,8 +421,9 @@ export class ReqSpecsProjectFormComponent {
 
   /** Stakeholders */
   addStakeholder() {
-    this.stakeholders.update(list => [...list, { name: '', role: '', contact: '' }]);
+    this.stakeholders.update(list => [...list, { name: '', role: 'viewer', contact: '' }]);
   }
+
   removeStakeholder(i: number) {
     this.stakeholders.update(list => list.filter((_, idx) => idx !== i));
   }
@@ -450,4 +505,5 @@ export class ReqSpecsProjectFormComponent {
   removeProjectStd(idx: number): void {
     this.projectStandards.splice(idx, 1);
   }
+
 }

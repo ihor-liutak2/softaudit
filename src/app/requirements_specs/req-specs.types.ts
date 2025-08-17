@@ -7,6 +7,8 @@ export type RequirementType = 'functional' | 'nonfunctional' | 'constraint' | 'g
 export type Priority = 'must' | 'should' | 'could' | 'wont';
 export type Status = 'draft' | 'in-review' | 'approved' | 'deprecated';
 export type EstimationMode = 'points' | 'time';
+// Stakeholder roles restricted to two values
+export type StakeholderRole = 'editor' | 'viewer';
 
 export interface UserRef {
   uid: Id;
@@ -78,12 +80,16 @@ export interface ReqSpecsProject {
   /** Optional planning helper (sprint length in days) */
   sprintLengthDays?: number;
 
-  // Stakeholders
+  // Stakeholders (store optional uid for access control)
   stakeholders?: Array<{
+    uid?: string;              // optional but recommended for access checks
     name: string;
-    role?: string;
-    contact?: string;           // email/phone/etc.
+    role: StakeholderRole;     // only 'editor' | 'viewer'
+    contact?: string;
   }>;
+
+  // Denormalized list for rules/queries
+  stakeholderUids?: string[];  // derived from stakeholders[].uid
 
   // References / artifacts
   links?: Array<{              // Project-level documents or URLs
